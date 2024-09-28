@@ -47,16 +47,27 @@ describe("Transactions", function () {
         });
 
         it("Should execute a transaction", async function () {
+            // Send some ETH to the contract
+            await addr1.sendTransaction({
+            to: fundme.getAddress(),
+            value: ethers.parseEther("1.0"), // Sending 1 ETH
+            });
+
             await fundme.submitTransaction(addr1.address, 100, "0x");
             await fundme.confirmTransaction(0);
             await fundme.connect(addr3).confirmTransaction(0);
-            await fundme.connect(addr1).confirmTransaction(0);
             await fundme.connect(addr1).executeTransaction(0);
             const tx = await fundme.getTransaction(0);
             expect(tx.executed).to.be.true;
         });
 
         it("Should revoke a confirmation", async function () {
+            // Send some ETH to the contract
+            await addr2.sendTransaction({
+            to: fundme.getAddress(),
+            value: ethers.parseEther("1.0"), // Sending 1 ETH
+            });
+
             await fundme.submitTransaction(addr1.address, 100, "0x");
             await fundme.confirmTransaction(0);
             await fundme.revokeConfirmation(0);
@@ -81,9 +92,15 @@ describe("Transactions", function () {
         });
 
         it("Should revert if transaction already executed", async function () {
+            // Send some ETH to the contract
+            await addr2.sendTransaction({
+                to: fundme.getAddress(),
+                value: ethers.parseEther("1.0"), // Sending 1 ETH
+            });
             await fundme.submitTransaction(addr1.address, 100, "0x");
             await fundme.confirmTransaction(0);
             await fundme.connect(addr1).confirmTransaction(0);
+            await fundme.connect(addr3).confirmTransaction(0);
             await fundme.executeTransaction(0);
             await expect(fundme.executeTransaction(0)).to.be.revertedWith("tx already executed");
         });
