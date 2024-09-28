@@ -10,7 +10,7 @@ async function main () {
     ];
     const exampleNumber = 2;
 
-    const fundme = await Fundme.deploy(exampleAddresses, exampleNumber);
+    const fundme = await Fundme.deploy(exampleAddresses, exampleNumber, 50, false);
     await fundme.waitForDeployment();
     console.log('Fundme deployed to:', await fundme.getAddress());
   }
