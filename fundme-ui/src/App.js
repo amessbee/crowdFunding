@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-// import { ethers } from "ethers";
-import { ethers } from "https://cdn.ethers.io/lib/ethers-5.2.esm.min.js";
+import { ethers } from "ethers";    
 import { Container, Row, Col, Button, Form, Table, Alert } from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { contractABI } from './contractABI';
+import { contractAddress, contractABI } from './contractABI';
 
-const contractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+const { providers } = ethers;
 
 
 const App = () => {
@@ -23,10 +22,11 @@ const App = () => {
 
   useEffect(() => {
     const loadProvider = async () => {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       setProvider(provider);
-      const signer = provider.getSigner();
+      const signer = await provider.getSigner();
       setSigner(signer);
       const contract = new ethers.Contract(contractAddress, contractABI, signer);
       setContract(contract);
@@ -83,7 +83,7 @@ const App = () => {
     try {
       const tx = await contract.submitProposal(
         proposalType,
-        newOwner || ethers.constants.AddressZero,
+        newOwner || ethers.ZeroAddress,
         newPercentage,
         newNumConfirmations,
         votingByWeight
@@ -241,7 +241,7 @@ const App = () => {
               {transactions.map((tx) => (
                 <tr key={tx.id}>
                   <td>{tx.to}</td>
-                  <td>{ethers.utils.formatEther(tx.value)} ETH</td>
+                  <td>{ethers.formatEther(tx.value)} ETH</td>
                   <td>{tx.numConfirmations}</td>
                   <td>
                     <Button onClick={() => handleVoteTransaction(tx.id)} variant="primary" className="mr-2">

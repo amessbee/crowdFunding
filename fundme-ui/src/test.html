@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethereum Contract Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body>
+    <h1>Ethereum Contract Test</h1>
+    <button id="connectButton">Connect to MetaMask</button>
+    <div id="status"></div>
+
+    <script type="module">
+        import { contractABI, contractAddress } from './contractABI.js';
+
+        let contract;
+
+        async function loadProvider() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const provider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    contract = new ethers.Contract(contractAddress, contractABI, signer);
+                    document.getElementById('status').innerHTML = "Contract loaded successfully";
+                    return contract;
+                } catch (error) {
+                    document.getElementById('status').innerHTML = "Error loading provider: " + error.message;
+                }
+            } else {
+                document.getElementById('status').innerHTML = "Please install MetaMask";
+            }
+        }
+
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            const loadedContract = await loadProvider();
+            if (loadedContract) {
+                // You can add function calls here
+                // For example:
+                // const result = await loadedContract.someFunction();
+                // document.getElementById('status').innerHTML = "Function result: " + result;
+            }
+        });
+    </script>
+</body>
+</html>
