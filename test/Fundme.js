@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Fundme", function () {
-    let Fundme, fundme, owner, addr1, addr2, addrs;
+    let Fundme, fundme, owner, addr1, addr2, addr3, addrs;
 
     beforeEach(async function () {
         Fundme = await ethers.getContractFactory("Fundme");
@@ -11,7 +11,7 @@ describe("Fundme", function () {
         await fundme.waitForDeployment();
     });
 
-describe("Deployment", function () {
+    describe("Deployment", function () {
         it("Should set the right owners", async function () {
             expect(await fundme.getOwners()).to.deep.equal([owner.address, addr1.address, addr2.address, addr3.address]);
         });
@@ -21,7 +21,7 @@ describe("Deployment", function () {
         });
     });
 
-describe("Owners", function () {
+    describe("Owners", function () {
         it("Should print all owners", async function () {
             const owners = await fundme.getOwners();
             console.log("Owners:", owners);
@@ -29,7 +29,7 @@ describe("Owners", function () {
         });
     });
 
-describe("Transactions", function () {
+    describe("Transactions", function () {
         it("Should submit a transaction", async function () {
             await fundme.submitTransaction(addr1.address, 100, "0x");
             const tx = await fundme.getTransaction(0);
@@ -49,8 +49,8 @@ describe("Transactions", function () {
         it("Should execute a transaction", async function () {
             // Send some ETH to the contract
             await addr1.sendTransaction({
-            to: fundme.getAddress(),
-            value: ethers.parseEther("1.0"), // Sending 1 ETH
+                to: fundme.getAddress(),
+                value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
 
             await fundme.submitTransaction(addr1.address, 100, "0x");
@@ -64,8 +64,8 @@ describe("Transactions", function () {
         it("Should revoke a confirmation", async function () {
             // Send some ETH to the contract
             await addr2.sendTransaction({
-            to: fundme.getAddress(),
-            value: ethers.parseEther("1.0"), // Sending 1 ETH
+                to: fundme.getAddress(),
+                value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
 
             await fundme.submitTransaction(addr1.address, 100, "0x");
@@ -109,6 +109,27 @@ describe("Transactions", function () {
             await fundme.submitTransaction(addr1.address, 100, "0x");
             await fundme.confirmTransaction(0);
             await expect(fundme.confirmTransaction(0)).to.be.revertedWith("tx already confirmed");
+        });
+    });
+
+    describe("Receive Function", function () {
+        it("Should emit Deposit event on receiving ETH", async function () {
+            
+            await expect(() =>
+                addr1.sendTransaction({
+                    to: fundme.getAddress(),
+                    value: ethers.parseEther("1.0"), // Sending 1 ETH
+                })
+            ).to.changeEtherBalances([addr1, fundme], [ethers.parseEther("-1.0"), ethers.parseEther("1.0")]);
+
+            let balanceBefore = await ethers.provider.getBalance(fundme.getAddress());
+            balanceBefore = balanceBefore + ethers.parseEther("1.0");
+            await expect(
+                addr1.sendTransaction({
+                    to: fundme.getAddress(),
+                    value: ethers.parseEther("1.0"), // Sending 1 ETH
+                })
+            ).to.emit(fundme, "Deposit").withArgs(addr1.address, ethers.parseEther("1.0"), balanceBefore );
         });
     });
 });
