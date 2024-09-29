@@ -119,6 +119,10 @@ contract Fundme {
         }
         emit Deposit(msg.sender, msg.value, address(this).balance);
     }
+    
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
 
     function submitTransaction(address _to, uint256 _value, bytes memory _data) public onlyOwner {
         uint256 txIndex = transactions.length;
