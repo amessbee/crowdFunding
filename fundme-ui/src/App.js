@@ -66,7 +66,7 @@ const App = () => {
   
   return (
     <Container>
-      <h1 className="mt-4">FundMe Dashboard</h1>
+      <h1 className="mt-4 text-center">FundMe Contract Dashboard</h1>
       <Collapse in={showAlert}>
   <div>
     <CSSTransition
@@ -92,11 +92,7 @@ const App = () => {
         onSelect={(k) => setKey(k)}
         className="mb-3"
       >
-        <Tab eventKey="proposals" title="Proposals">
-          <Proposals contract={contract} showAlertMessage={showAlertMessage} />
-        </Tab>
-
-        <Tab eventKey="transactions" title="Projects">
+        <Tab eventKey="transactions" title="Projects in Need">
           <Transactions contract={contract} showAlertMessage={showAlertMessage} />
         </Tab>
 
@@ -110,6 +106,11 @@ const App = () => {
         showAlertMessage={showAlertMessage}
         />
         </Tab>
+
+        <Tab eventKey="proposals" title="FundMe Proposals">
+          <Proposals contract={contract} showAlertMessage={showAlertMessage} />
+        </Tab>
+
       </Tabs>
     </Container>
   );

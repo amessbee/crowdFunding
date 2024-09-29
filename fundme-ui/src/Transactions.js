@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Row, Col, Form } from "react-bootstrap";
 import { ethers } from "ethers";
 
-const Transactions = ({ contract, showAlertMessage }) => {
+const Projects = ({ contract, showAlertMessage }) => {
   const [transactions, setTransactions] = useState([]);
   const [toAddress, setToAddress] = useState("");
   const [value, setValue] = useState("");
@@ -28,10 +28,10 @@ const Transactions = ({ contract, showAlertMessage }) => {
     try {
       const tx = await contract.confirmTransaction(txId);
       await tx.wait();
-      showAlertMessage("Transaction vote successful!");
+      showAlertMessage("Project vote successful!");
       loadTransactions();
     } catch (error) {
-      showAlertMessage("Error voting on transaction.");
+      showAlertMessage("Error voting on project.");
     }
   };
 
@@ -39,10 +39,10 @@ const Transactions = ({ contract, showAlertMessage }) => {
     try {
       const tx = await contract.executeTransaction(txId);
       await tx.wait();
-      showAlertMessage("Transaction executed successfully!");
+      showAlertMessage("Project executed successfully!");
       loadTransactions();
     } catch (error) {
-      showAlertMessage("Error executing transaction.");
+      showAlertMessage("Error executing project.");
     }
   };
 
@@ -51,13 +51,13 @@ const Transactions = ({ contract, showAlertMessage }) => {
     try {
       const tx = await contract.submitTransaction(toAddress, ethers.parseEther(value), ethers.toUtf8Bytes("Project 51"));
       await tx.wait();
-      showAlertMessage("Transaction submitted successfully!");
+      showAlertMessage("Project submitted successfully!");
       loadTransactions();
     } catch (error) {
-      showAlertMessage("Error submitting transaction.");
-      console.error("Error submitting transaction:", error);
+      showAlertMessage("Error submitting project.");
+      console.error("Error submitting project:", error);
       console.log("toAddress", toAddress);
-        console.log("value", value);
+      console.log("value", value);
     }
   };
 
@@ -65,13 +65,13 @@ const Transactions = ({ contract, showAlertMessage }) => {
     <>
       <Row className="my-4">
         <Col>
-          <h3>Active Transactions</h3>
+          <h3>Active Projects</h3>
           <Table striped bordered hover>
             <thead>
               <tr>
                 <th>To</th>
                 <th>Value</th>
-                <th>Confirmations</th>
+                <th>Votes</th>
                 <th>Weight</th>
                 <th>Actions</th>
               </tr>
@@ -82,7 +82,7 @@ const Transactions = ({ contract, showAlertMessage }) => {
                   <td>{tx.to}</td>
                   <td>{ethers.formatEther(tx.value)} ETH</td>
                   <td>{tx.numConfirmations.toString()}</td>
-                  <td>{ ethers.formatEther(tx.weight) }</td>
+                  <td>{ethers.formatEther(tx.weight)}</td>
                   <td>
                     <Button
                       onClick={() => handleVoteTransaction(tx.id)}
@@ -109,7 +109,7 @@ const Transactions = ({ contract, showAlertMessage }) => {
 
       <Row className="my-4">
         <Col>
-          <h3>Submit a New Transaction</h3>
+          <h3>Champion a New Project</h3>
           <Form onSubmit={handleSubmitTransaction}>
             <Form.Group>
               <Form.Label>To Address</Form.Label>
@@ -117,12 +117,12 @@ const Transactions = ({ contract, showAlertMessage }) => {
                 type="text"
                 value={toAddress}
                 onChange={(e) => setToAddress(e.target.value)}
-                placeholder="Enter recipient address"
+                placeholder="Enter beneficiary address"
               />
             </Form.Group>
 
             <Form.Group>
-              <Form.Label>Value (in ETH)</Form.Label>
+              <Form.Label>Project Demand (in ETH)</Form.Label>
               <Form.Control
                 type="text"
                 value={value}
@@ -132,7 +132,7 @@ const Transactions = ({ contract, showAlertMessage }) => {
             </Form.Group>
 
             <Button variant="primary" type="submit" className="mt-3">
-              Submit Transaction
+              Submit Project
             </Button>
           </Form>
         </Col>
@@ -141,4 +141,4 @@ const Transactions = ({ contract, showAlertMessage }) => {
   );
 };
 
-export default Transactions;
+export default Projects;
