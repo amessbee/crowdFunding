@@ -31,10 +31,10 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
         newOwner: proposal.newOwner || proposal[1],
         newPercentageConfirmationsRequired: proposal.newPercentageConfirmationsRequired || proposal[2],
         newNumConfirmationsRequired: proposal.newNumConfirmationsRequired || proposal[3],
-        votingByWeight: proposal.newVotingByWeight || proposal[4],
+        newVotingByWeight: proposal.newVotingByWeight || proposal[4],
         numConfirmations: proposal.numConfirmations || proposal[5],
         weight: proposal.weight || proposal[6],
-        executed: proposal.executed || proposal[6],
+        executed: proposal.executed || proposal[7],
       };
 
       loadedProposals.push(mappedProposal);
@@ -127,7 +127,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
             </thead>
             <tbody>
               {proposals.map((proposal) => (
-                <tr key={proposal.id}>
+                <tr key={proposal.id} style={{ color: proposal.executed ? 'green' : 'black' }}>
                   <td>{proposal.proposalType}</td>
                   <td>
                     {proposal.proposalType === "addOwner" &&
@@ -137,9 +137,9 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
                     {proposal.proposalType === "changeVotingMethod" &&
                       `Voting Method: ${proposal.newVotingByWeight ? "Voting by Weight" : "Voting by Count"}`}
                     {proposal.proposalType === "changePassingNumConfirmations" &&
-                      `Num Confirmations: ${proposal.newNumConfirmations}`}
+                      `Required Confirmations: ${proposal.newNumConfirmationsRequired}`}
                     {proposal.proposalType === "changePassingWeightConfirmations" &&
-                      `Weight Confirmations: ${proposal.newPercentageConfirmationsRequired}`}
+                      `Required Weight: ${proposal.newPercentageConfirmationsRequired}`}
                   </td>
                   <td>{proposal.numConfirmations.toString()}</td>
                   <td>
@@ -147,12 +147,14 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
                       onClick={() => handleVoteProposal(proposal.id)}
                       variant="primary"
                       className="me-2"
+                      disabled={proposal.executed}
                     >
                       Vote
                     </Button>
                     <Button
                       onClick={() => handleExecuteProposal(proposal.id)}
                       variant="success"
+                      disabled={proposal.executed}
                     >
                       Execute
                     </Button>

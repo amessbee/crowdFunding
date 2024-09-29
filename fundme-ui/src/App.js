@@ -96,11 +96,11 @@ const App = () => {
           <Proposals contract={contract} showAlertMessage={showAlertMessage} />
         </Tab>
 
-        <Tab eventKey="transactions" title="Transactions">
+        <Tab eventKey="transactions" title="Projects">
           <Transactions contract={contract} showAlertMessage={showAlertMessage} />
         </Tab>
 
-        <Tab eventKey="sendEth" title="Send ETH">
+        <Tab eventKey="sendEth" title="Donate Funds">
         <SendEth
         provider={provider}
         contract={contract}

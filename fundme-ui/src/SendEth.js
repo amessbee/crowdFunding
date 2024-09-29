@@ -39,12 +39,12 @@ const SendEth = ({
         value: ethAmountInWei,
       });
       await tx.wait();
-      showAlertMessage(`Sent ${ethAmount} ETH to the contract!`);
+      showAlertMessage(`Sent ${ethAmount} ETH to the FundMe!`);
       setEthAmount(10);
       updateContractBalance(contract);
     } catch (error) {
-      console.error('Error sending transaction:', error);
-      showAlertMessage(`Error sending transaction: ${error.message}`);
+      console.error('Error sending funds:', error);
+      showAlertMessage(`Error sending funds: ${error.message}`);
     }
   };
 
@@ -52,11 +52,11 @@ const SendEth = ({
   return (
     <Row className="my-4">
       <Col>
-        <h3>Send ETH to Contract</h3>
-        <p>Current Contract Balance: {contractBalance} ETH</p>
+        <h3>Donate Funds to FundMe</h3>
+        <p>Current FundMe Contract Balance: {contractBalance} ETH!!</p>
         <Form onSubmit={handleSendEth}>
           <Form.Group>
-            <Form.Label>Amount of ETH to send</Form.Label>
+            <Form.Label>Amount of ETH to donate</Form.Label>
             <Form.Control
               type="number"
               value={ethAmount}
