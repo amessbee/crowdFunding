@@ -5,6 +5,7 @@
     "hardhat": "^2.22.12"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
     "bootstrap": "^5.3.3",
     "ethers": "^6.13.2",
     "react-bootstrap": "^2.10.5",

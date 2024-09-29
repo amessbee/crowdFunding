@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Row, Col, Form } from "react-bootstrap";
+import { Table, Button, Row, Col, Form, Tabs, Tab } from "react-bootstrap";
 import { ethers } from "ethers";
 
 const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
   const [proposals, setProposals] = useState([]);
-  const [proposalType, setProposalType] = useState("changeParameter");
+  const [activeTab, setActiveTab] = useState("addOwner");
   const [newOwner, setNewOwner] = useState("");
-  const [selectedParameter, setSelectedParameter] = useState("newPercentageConfirmationsRequired");
-  const [newParameterValue, setNewParameterValue] = useState("");
-  const [votingByWeight, setVotingByWeight] = useState(false);  // Will be handled by dropdown
-  const [currentParameterValue, setCurrentParameterValue] = useState("");
+  const [newNumConfirmations, setNewNumConfirmations] = useState("");
+  const [newWeightConfirmations, setNewWeightConfirmations] = useState("");
+  const [votingByWeight, setVotingByWeight] = useState(false);
   const [owners, setOwners] = useState([]);  // To store the list of owners
 
   useEffect(() => {
@@ -19,28 +18,23 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
     }
   }, [contract]);
 
-  useEffect(() => {
-    if (contractParameters && selectedParameter) {
-      setCurrentParameterValue(contractParameters[selectedParameter]);
-    }
-  }, [selectedParameter, contractParameters]);
-
   const loadProposals = async () => {
     const proposalCount = await contract.getProposalCount();
     const loadedProposals = [];
 
     for (let i = 0; i < proposalCount; i++) {
       const proposal = await contract.getProposal(i);
-
       // Map the proposal data
       const mappedProposal = {
         id: i,
         proposalType: proposal.proposalType || proposal[0],
         newOwner: proposal.newOwner || proposal[1],
-        newParameterValue: proposal.newParameterValue || proposal[2],
-        votingByWeight: proposal.votingByWeight || proposal[3],
-        numConfirmations: proposal.numConfirmations || proposal[4],
-        executed: proposal.executed || proposal[5],
+        newPercentageConfirmationsRequired: proposal.newPercentageConfirmationsRequired || proposal[2],
+        newNumConfirmationsRequired: proposal.newNumConfirmationsRequired || proposal[3],
+        votingByWeight: proposal.newVotingByWeight || proposal[4],
+        numConfirmations: proposal.numConfirmations || proposal[5],
+        weight: proposal.weight || proposal[6],
+        executed: proposal.executed || proposal[6],
       };
 
       loadedProposals.push(mappedProposal);
@@ -50,7 +44,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
 
   const loadOwners = async () => {
     try {
-      const ownersList = await contract.owners();  // Fetch the list of owners from the contract
+      const ownersList = await contract.getOwners();  // Fetch the list of owners from the contract
       setOwners(ownersList);  // Store owners in state
     } catch (error) {
       showAlertMessage("Error loading owners.");
@@ -64,7 +58,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
       showAlertMessage("Vote on proposal successful!");
       loadProposals();
     } catch (error) {
-      showAlertMessage("Error voting on proposal.");
+      showAlertMessage("Error voting on proposal " + proposalId );
     }
   };
 
@@ -75,29 +69,33 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
       showAlertMessage("Proposal executed successfully!");
       loadProposals();
     } catch (error) {
-      showAlertMessage("Error executing proposal.");
+      showAlertMessage("Error executing proposal " + proposalId );
+      console.log(error);
     }
   };
 
   const handleSubmitProposal = async (e) => {
     e.preventDefault();
     try {
-      // Prepare parameters based on proposal type
-      let proposalNewOwner = ethers.ZeroAddress; // Default empty address for Ethers v6
-      let proposalNewPercentage = 0;  // Default to 0 for other proposal types
-      let proposalNewNumConfirmations = 0;  // Default to 0 for other proposal types
-      let proposalVotingByWeight = votingByWeight;  // Dropdown value for voting method
+      let proposalNewOwner = ethers.ZeroAddress;
+      let proposalNewPercentage = 0;
+      let proposalNewNumConfirmations = 0;
+      let proposalVotingByWeight = votingByWeight;
 
-      if (proposalType === "addOwner" || proposalType === "removeOwner") {
+      if (activeTab === "addOwner") {
         proposalNewOwner = newOwner;
-      } else if (proposalType === "changeParameter") {
-        proposalNewPercentage = newParameterValue;  // Input for percentage confirmations
-        proposalNewNumConfirmations = newParameterValue;  // Input for number of confirmations
+      } else if (activeTab === "removeOwner") {
+        proposalNewOwner = newOwner;
+      } else if (activeTab === "changeVotingMethod") {
+        proposalVotingByWeight = votingByWeight;
+      } else if (activeTab === "changePassingNumConfirmations") {
+        proposalNewNumConfirmations = newNumConfirmations;
+      } else if (activeTab === "changePassingWeightConfirmations") {
+        proposalNewPercentage = newWeightConfirmations;
       }
 
-      // Call contract function
       const tx = await contract.submitProposal(
-        proposalType,
+        activeTab,
         proposalNewOwner,
         proposalNewPercentage,
         proposalNewNumConfirmations,
@@ -106,10 +104,10 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
       
       await tx.wait();
       showAlertMessage("Proposal submitted successfully!");
-      loadProposals();  // Reload proposals after successful submission
+      loadProposals();
     } catch (error) {
       console.error(error);
-      showAlertMessage("Error submitting proposal.");
+      showAlertMessage("Error submitting proposal " );
     }
   };
 
@@ -136,8 +134,12 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
                       `Add Owner: ${proposal.newOwner}`}
                     {proposal.proposalType === "removeOwner" &&
                       `Remove Owner: ${proposal.newOwner}`}
-                    {proposal.proposalType === "changeParameter" &&
-                      `Parameter: ${selectedParameter}, New Value: ${proposal.newParameterValue}, Voting Method: ${proposal.votingByWeight ? "Voting by Weight" : "Voting by Count"}`}
+                    {proposal.proposalType === "changeVotingMethod" &&
+                      `Voting Method: ${proposal.newVotingByWeight ? "Voting by Weight" : "Voting by Count"}`}
+                    {proposal.proposalType === "changePassingNumConfirmations" &&
+                      `Num Confirmations: ${proposal.newNumConfirmations}`}
+                    {proposal.proposalType === "changePassingWeightConfirmations" &&
+                      `Weight Confirmations: ${proposal.newPercentageConfirmationsRequired}`}
                   </td>
                   <td>{proposal.numConfirmations.toString()}</td>
                   <td>
@@ -164,107 +166,100 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
 
       <Row className="my-4">
         <Col>
-          <h3>Submit a New Proposal</h3>
-          <Form onSubmit={handleSubmitProposal}>
-            <Form.Group>
-              <Form.Label>Proposal Type</Form.Label>
-              <Form.Control
-                as="select"
-                value={proposalType}
-                onChange={(e) => setProposalType(e.target.value)}
-              >
-                <option value="changeParameter">Change Parameter</option>
-                <option value="addOwner">Add Owner</option>
-                <option value="removeOwner">Remove Owner</option>
-              </Form.Control>
-            </Form.Group>
-
-            {proposalType === "changeParameter" && (
-              <>
+        <h3>Submit a New Proposal</h3>
+          <Tabs activeKey={activeTab} onSelect={(tab) => setActiveTab(tab)} className="mb-3">
+            <Tab eventKey="addOwner" title="Add Owner">
+              <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
-                  <Form.Label>Choose Parameter to Change</Form.Label>
+                  <Form.Label>New Owner Address</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={newOwner}
+                    onChange={(e) => setNewOwner(e.target.value)}
+                    placeholder="Enter new owner address"
+                  />
+                </Form.Group>
+                <Button variant="primary" type="submit" className="mt-3">
+                  Submit Proposal
+                </Button>
+              </Form>
+            </Tab>
+
+            <Tab eventKey="removeOwner" title="Remove Owner">
+              <Form onSubmit={handleSubmitProposal}>
+                <Form.Group>
+                  <Form.Label>Select Owner to Remove</Form.Label>
                   <Form.Control
                     as="select"
-                    value={selectedParameter}
-                    onChange={(e) => setSelectedParameter(e.target.value)}
+                    value={newOwner}
+                    onChange={(e) => setNewOwner(e.target.value)}
                   >
-                    <option value="newPercentageConfirmationsRequired">
-                      Percentage Confirmations Required
-                    </option>
-                    <option value="newNumConfirmationsRequired">
-                      Num Confirmations Required
-                    </option>
-                    <option value="votingMethod">Voting Method</option>  {/* New option added */}
+                    {owners.map((owner) => (
+                      <option key={owner} value={owner}>
+                        {owner}
+                      </option>
+                    ))}
                   </Form.Control>
                 </Form.Group>
+                <Button variant="primary" type="submit" className="mt-3">
+                  Submit Proposal
+                </Button>
+              </Form>
+            </Tab>
 
+            <Tab eventKey="changeVotingMethod" title="Change Voting Method">
+              <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
-                  <Form.Label>Current Value: {currentParameterValue}</Form.Label>
+                  <Form.Label>Select Voting Method</Form.Label>
+                  <Form.Control
+                    as="select"
+                    value={votingByWeight ? "weight" : "count"}
+                    onChange={(e) => {console.log(e.target.value); setVotingByWeight(e.target.value === "weight"); console.log(votingByWeight);}}
+                  >
+                    <option value="count">Voting by Count</option>
+                    <option value="weight">Voting by Weight</option>
+                  </Form.Control>
                 </Form.Group>
+                <Button variant="primary" type="submit" className="mt-3">
+                  Submit Proposal
+                </Button>
+              </Form>
+            </Tab>
 
-                {/* Only show new value input if not changing the voting method */}
-                {selectedParameter !== "votingMethod" && (
-                  <Form.Group>
-                    <Form.Label>New Value</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={newParameterValue}
-                      onChange={(e) => setNewParameterValue(e.target.value)}
-                      placeholder="Enter new value"
-                    />
-                  </Form.Group>
-                )}
+            <Tab eventKey="changePassingNumConfirmations" title="Change Num Confirmations">
+              <Form onSubmit={handleSubmitProposal}>
+                <Form.Group>
+                  <Form.Label>New Number of Confirmations Required</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={newNumConfirmations}
+                    onChange={(e) => setNewNumConfirmations(e.target.value)}
+                    placeholder="Enter number of confirmations"
+                  />
+                </Form.Group>
+                <Button variant="primary" type="submit" className="mt-3">
+                  Submit Proposal
+                </Button>
+              </Form>
+            </Tab>
 
-                {/* Voting method dropdown */}
-                {selectedParameter === "votingMethod" && (
-                  <Form.Group>
-                    <Form.Label>Select Voting Method</Form.Label>
-                    <Form.Control
-                      as="select"
-                      value={votingByWeight ? "weight" : "count"}
-                      onChange={(e) => setVotingByWeight(e.target.value === "weight")}
-                    >
-                      <option value="count">Voting by Count</option>
-                      <option value="weight">Voting by Weight</option>
-                    </Form.Control>
-                  </Form.Group>
-                )}
-              </>
-            )}
-
-            {proposalType === "addOwner" && (
-              <Form.Group>
-                <Form.Label>New Owner Address</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={newOwner}
-                  onChange={(e) => setNewOwner(e.target.value)}
-                  placeholder="Enter new owner address"
-                />
-              </Form.Group>
-            )}
-
-            {proposalType === "removeOwner" && (
-              <Form.Group>
-                <Form.Label>Select Owner to Remove</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={newOwner}
-                  onChange={(e) => setNewOwner(e.target.value)}
-                >
-                  {owners.map((owner) => (
-                    <option key={owner} value={owner}>
-                      {owner}
-                    </option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
-            )}
-
-            <Button variant="primary" type="submit">
-              Submit Proposal
-            </Button>
-          </Form>
+            <Tab eventKey="changePassingWeightConfirmations" title="Change Weight Confirmations">
+              <Form onSubmit={handleSubmitProposal}>
+                <Form.Group>
+                  <Form.Label>New Weight of Confirmations Required</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={newWeightConfirmations}
+                    onChange={(e) => setNewWeightConfirmations(e.target.value)}
+                    placeholder="Enter weight of confirmations"
+                  />
+                </Form.Group>
+                <Button variant="primary" type="submit" className="mt-3">
+                  Submit Proposal
+                </Button>
+              </Form>
+            </Tab>
+          </Tabs>
         </Col>
       </Row>
     </>

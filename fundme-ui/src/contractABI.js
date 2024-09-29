@@ -1,4 +1,4 @@
-export const contractAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
+export const contractAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6";
 export const contractABI= [
   {
     "inputs": [
@@ -324,14 +324,19 @@ export const contractABI= [
         "type": "uint256"
       },
       {
+        "internalType": "bool",
+        "name": "newVotingByWeight",
+        "type": "bool"
+      },
+      {
         "internalType": "uint256",
         "name": "numConfirmations",
         "type": "uint256"
       },
       {
-        "internalType": "bool",
-        "name": "newVotingByWeight",
-        "type": "bool"
+        "internalType": "uint256",
+        "name": "weight",
+        "type": "uint256"
       },
       {
         "internalType": "bool",
@@ -714,11 +719,11 @@ export const contractABI= [
         "type": "bool"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
-  }
+  "stateMutability": "view",
+  "type": "function"
+},
+{
+  "stateMutability": "payable",
+  "type": "receive"
+}
 ];

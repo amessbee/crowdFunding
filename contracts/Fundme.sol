@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
+import "hardhat/console.sol";
+// import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Fundme {
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
@@ -90,11 +92,11 @@ contract Fundme {
     constructor(address[] memory _owners, uint256 _numConfirmationsRequired, uint256 _percentageConfirmationsRequired, bool _votingByWeight) {
         require(_owners.length > 0, "owners required");
         require(
-            _percentageConfirmationsRequired > 0 && _percentageConfirmationsRequired <= 100,
+            _percentageConfirmationsRequired >= 0 && _percentageConfirmationsRequired <= 100,
             "invalid number of required percentage confirmations"
         );
         require(
-            _numConfirmationsRequired > 0 && _numConfirmationsRequired <= _owners.length,
+            _numConfirmationsRequired >= 0 && _numConfirmationsRequired <= _owners.length,
             "invalid number of required confirmations"
         );
 
@@ -141,9 +143,16 @@ contract Fundme {
     function executeTransaction(uint256 _txIndex) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         if (votingByWeight) {
-            require(transaction.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute tx");
+            require(transaction.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute tx - voting by weight");
+            console.log("transaction.weight: %s", transaction.weight);
+            console.log("totalContributions: %s", totalContributions);
+            console.log("percentageConfirmationsRequired: %s", percentageConfirmationsRequired);
+
         } else {
-            require(transaction.numConfirmations >= numConfirmationsRequired, "cannot execute tx");
+            require(transaction.numConfirmations >= numConfirmationsRequired, "cannot execute tx - voting by count") ;
+            console.log("transaction.numConfirmations: %s", transaction.numConfirmations);
+            console.log("numConfirmationsRequired: %s", numConfirmationsRequired);
+
         }
         transaction.executed = true;
         (bool success, ) = transaction.to.call{value: transaction.value}(transaction.data);
@@ -195,9 +204,9 @@ contract Fundme {
         Proposal storage proposal = proposals[_proposalId];
 
         if (votingByWeight) {
-            require(proposal.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute proposal");
+            require(proposal.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute proposal - voting by weight" ) ;
         } else {
-            require(proposal.numConfirmations >= numConfirmationsRequired, "cannot execute proposal");
+            require(proposal.numConfirmations >= numConfirmationsRequired, "cannot execute proposal - voting by count");
         }
 
         if (keccak256(bytes(proposal.proposalType)) == keccak256("addOwner")) {
@@ -238,12 +247,13 @@ contract Fundme {
         return (transaction.to, transaction.value, transaction.data, transaction.executed, transaction.numConfirmations, transaction.weight);
     }
 
-    function getProposal(uint256 _proposalId) public view returns (string memory proposalType, address newOwner, uint256 newPercentageConfirmationsRequired, uint256 newNumConfirmationsRequired, uint256 numConfirmations, bool newVotingByWeight, bool executed) {
+    function getProposal(uint256 _proposalId) public view returns (string memory proposalType, address newOwner, uint256 newPercentageConfirmationsRequired, uint256 newNumConfirmationsRequired,  bool newVotingByWeight, uint256 numConfirmations,uint256 weight, bool executed) {
         Proposal storage proposal = proposals[_proposalId];
-        return (proposal.proposalType, proposal.newOwner, proposal.newPercentageConfirmationsRequired, proposal.newNumConfirmationsRequired, proposal.numConfirmations, proposal.newVotingByWeight, proposal.executed);
+        return (proposal.proposalType, proposal.newOwner, proposal.newPercentageConfirmationsRequired, proposal.newNumConfirmationsRequired, proposal.newVotingByWeight, proposal.numConfirmations, proposal.weight, proposal.executed);
     }
 
     function getProposalCount() public view returns (uint256) {
         return proposals.length;
     }
+
 }
