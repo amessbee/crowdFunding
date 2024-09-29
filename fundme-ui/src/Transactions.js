@@ -19,6 +19,7 @@ const Transactions = ({ contract, showAlertMessage }) => {
     for (let i = 0; i < transactionCount; i++) {
       const [to, value, data, executed, numConfirmations, weight] = await contract.getTransaction(i);
       loadedTransactions.push({ id: i, to, value, data, executed, numConfirmations, weight });
+      console.log("weight ", weight);
     }
     setTransactions(loadedTransactions);
   };
@@ -77,11 +78,11 @@ const Transactions = ({ contract, showAlertMessage }) => {
             </thead>
             <tbody>
               {transactions.map((tx) => (
-                <tr key={tx.id} style={{ color: tx.executed ? 'grey' : 'black' }}>
+                <tr key={tx.id} style={{ color: tx.executed ? 'green' : 'black' }}>
                   <td>{tx.to}</td>
                   <td>{ethers.formatEther(tx.value)} ETH</td>
-                  <td>{tx.numConfirmations}</td>
-                  <td>{tx.weight}</td>
+                  <td>{tx.numConfirmations.toString()}</td>
+                  <td>{ ethers.formatEther(tx.weight) }</td>
                   <td>
                     <Button
                       onClick={() => handleVoteTransaction(tx.id)}
