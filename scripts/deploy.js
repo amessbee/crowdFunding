@@ -1,5 +1,7 @@
 // scripts/deploy.js
-// contract address on localhost: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+const fs = require('fs');
+const contractName = "Fundme";
+
 async function main () {
     // We get the contract to deploy
     const Fundme = await ethers.getContractFactory('Fundme');
@@ -12,7 +14,20 @@ async function main () {
 
     const fundme = await Fundme.deploy(ownerAddresses, minimumVotes, 50, false);
     await fundme.waitForDeployment();
-    console.log('Fundme deployed to:', await fundme.getAddress());
+    const contractAddress = await fundme.getAddress();
+    console.log('Fundme deployed to:', contractAddress);
+
+    // Append the contract address to contractABI.js
+    const outputFilePath = './fundme-ui/src/contractABI.js';
+    const contractABI = require(`../artifacts/contracts/${contractName}.sol/${contractName}.json`).abi;
+    
+    const content = `
+      export const contractABI = ${JSON.stringify(contractABI, null, 2)};
+      export const contractAddress = "${contractAddress}";
+    `;
+
+    fs.writeFileSync(outputFilePath, content, 'utf8');
+    console.log('ABI and address saved to contractABI.js');
   }
   
   main()
