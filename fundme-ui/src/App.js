@@ -92,11 +92,7 @@ const App = () => {
         onSelect={(k) => setKey(k)}
         className="mb-3"
       >
-        <Tab eventKey="transactions" title="Projects in Need">
-          <Transactions contract={contract} showAlertMessage={showAlertMessage} />
-        </Tab>
-
-        <Tab eventKey="sendEth" title="Donate Funds">
+        <Tab eventKey="sendEth" title="Donate Funds to the Contract">
         <SendEth
         provider={provider}
         contract={contract}
@@ -107,7 +103,13 @@ const App = () => {
         />
         </Tab>
 
-        <Tab eventKey="proposals" title="FundMe Proposals">
+        <Tab eventKey="transactions" title="Projects in Need">
+          <Transactions contract={contract} showAlertMessage={showAlertMessage} />
+        </Tab>
+
+
+
+        <Tab eventKey="proposals" title="FundMe Committee Admin Proposals">
           <Proposals contract={contract} showAlertMessage={showAlertMessage} />
         </Tab>
 

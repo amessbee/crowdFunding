@@ -115,7 +115,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
     <>
       <Row className="my-4">
         <Col>
-          <h3>Active Proposals</h3>
+          <h3>Active Admin Proposals</h3>
           <Table striped bordered hover>
             <thead>
               <tr>
@@ -131,9 +131,9 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
                   <td>{proposal.proposalType}</td>
                   <td>
                     {proposal.proposalType === "addOwner" &&
-                      `Add Owner: ${proposal.newOwner}`}
+                      `Add Member: ${proposal.newOwner}`}
                     {proposal.proposalType === "removeOwner" &&
-                      `Remove Owner: ${proposal.newOwner}`}
+                      `Remove Member: ${proposal.newOwner}`}
                     {proposal.proposalType === "changeVotingMethod" &&
                       `Voting Method: ${proposal.newVotingByWeight ? "Voting by Weight" : "Voting by Count"}`}
                     {proposal.proposalType === "changePassingNumConfirmations" &&
@@ -168,17 +168,17 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
 
       <Row className="my-4">
         <Col>
-        <h3>Submit a New Proposal</h3>
+        <h3>Submit a New Admin Proposal</h3>
           <Tabs activeKey={activeTab} onSelect={(tab) => setActiveTab(tab)} className="mb-3">
-            <Tab eventKey="addOwner" title="Add Owner">
+            <Tab eventKey="addOwner" title="Add a New Member">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
-                  <Form.Label>New Owner Address</Form.Label>
+                  <Form.Label>New Committee Member Address</Form.Label>
                   <Form.Control
                     type="text"
                     value={newOwner}
                     onChange={(e) => setNewOwner(e.target.value)}
-                    placeholder="Enter new owner address"
+                    placeholder="Enter new committee member address"
                   />
                 </Form.Group>
                 <Button variant="primary" type="submit" className="mt-3">
@@ -187,10 +187,10 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               </Form>
             </Tab>
 
-            <Tab eventKey="removeOwner" title="Remove Owner">
+            <Tab eventKey="removeOwner" title="Remove a Member">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
-                  <Form.Label>Select Owner to Remove</Form.Label>
+                  <Form.Label>Select Committee Member to Remove</Form.Label>
                   <Form.Control
                     as="select"
                     value={newOwner}
@@ -209,7 +209,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               </Form>
             </Tab>
 
-            <Tab eventKey="changeVotingMethod" title="Change Voting Method">
+            <Tab eventKey="changeVotingMethod" title="Voting Scheme">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
                   <Form.Label>Select Voting Method</Form.Label>
@@ -228,15 +228,15 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               </Form>
             </Tab>
 
-            <Tab eventKey="changePassingNumConfirmations" title="Change Num Confirmations">
+            <Tab eventKey="changePassingNumConfirmations" title="Voting Count Req.">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
-                  <Form.Label>New Number of Confirmations Required</Form.Label>
+                  <Form.Label>New minimum Count of Votes Required</Form.Label>
                   <Form.Control
                     type="text"
                     value={newNumConfirmations}
                     onChange={(e) => setNewNumConfirmations(e.target.value)}
-                    placeholder="Enter number of confirmations"
+                    placeholder="Enter number of votes"
                   />
                 </Form.Group>
                 <Button variant="primary" type="submit" className="mt-3">
@@ -245,15 +245,15 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               </Form>
             </Tab>
 
-            <Tab eventKey="changePassingWeightConfirmations" title="Change Weight Confirmations">
+            <Tab eventKey="changePassingWeightConfirmations" title="Voting Weight Req.">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
-                  <Form.Label>New Weight of Confirmations Required</Form.Label>
+                  <Form.Label>New Minimum Weight of Votes Required</Form.Label>
                   <Form.Control
                     type="text"
                     value={newWeightConfirmations}
                     onChange={(e) => setNewWeightConfirmations(e.target.value)}
-                    placeholder="Enter weight of confirmations"
+                    placeholder="Enter minimum weight required"
                   />
                 </Form.Group>
                 <Button variant="primary" type="submit" className="mt-3">
@@ -261,6 +261,27 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
                 </Button>
               </Form>
             </Tab>
+
+            <Tab eventKey="changeAutoExecution" title="Execution Method">
+              <Form onSubmit={handleSubmitProposal}>
+                <Form.Group>
+                  <Form.Label>Select Execution Method</Form.Label>
+                  <Form.Control
+                    as="select"
+                    value={votingByWeight ? "auto" : "onRequest"}
+                    onChange={(e) => {console.log(e.target.value); setVotingByWeight(e.target.value === "weight"); console.log(votingByWeight);}}
+                  >
+                    <option value="auto">Auto-execute on Passing Vote</option>
+                    <option value="onRequest">Execute at Request Only</option>
+                  </Form.Control>
+                </Form.Group>
+                <Button variant="primary" type="submit" className="mt-3">
+                  Submit Proposal
+                </Button>
+              </Form>
+            </Tab>
+
+            
           </Tabs>
         </Col>
       </Row>
