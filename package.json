@@ -2,7 +2,7 @@
   "name": "hardhat-project",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.12"
+    "hardhat": "^2.22.13"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
@@ -15,6 +15,7 @@
     "start": "npm run contract && npm run ui",
     "chain": "hardhat node ",
     "contract": "hardhat compile && hardhat run scripts/deploy.js --network localhost",
-    "ui": "cd fundme-ui && npm start && open http://localhost:3000/"
+    "ui": "cd fundme-ui && npm start && open http://localhost:3000/",
+    "test": "hardhat test"
   }
 }

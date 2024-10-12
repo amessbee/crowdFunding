@@ -1,6 +1,18 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+/**
+ * This test suite is designed to comprehensively test the functionality of a smart contract called "Fundme" that operates 
+ * with weighted voting and multi-signature transaction approval. It covers various aspects of the contract's functionality, 
+ * including deployment, ownership management, transaction submission, confirmation, execution, and revocation, as well as 
+ * ensuring that only valid owners can submit and confirm transactions. The tests also cover edge cases such as preventing 
+ * duplicate confirmations, handling insufficient transaction weight for execution, and reverting on unauthorized actions.
+ * Additionally, the suite verifies the contract's behavior in handling ETH contributions, tracking contributions, and emitting 
+ * appropriate events. Finally, proposals for adding/removing owners or changing contract parameters are tested, ensuring that 
+ * they can be submitted, voted on, and executed under the correct conditions.
+ */
+
+
 describe("Fundme with votingByWeight", function () {
     let Fundme, fundme, owner, addr1, addr2, addr3, addrs;
     let votingByWeight = true;
@@ -91,7 +103,7 @@ describe("Transactions", function () {
 
             await fundme.submitTransaction(addr1.address, 100, "0x");
             await fundme.connect(addr1).confirmTransaction(0);
-            await expect(fundme.executeTransaction(0)).to.be.revertedWith("cannot execute tx");
+            await expect(fundme.executeTransaction(0)).to.be.revertedWith("cannot execute tx - voting by weight");
         });
 
         it("Should revoke a confirmation", async function () {
@@ -269,7 +281,7 @@ describe("Transactions", function () {
         it("Should not execute a transaction without enough confirmations", async function () {
             await fundme.submitTransaction(addr1.address, 100, "0x");
             await fundme.confirmTransaction(0);
-            await expect(fundme.executeTransaction(0)).to.be.revertedWith("cannot execute tx");
+            await expect(fundme.executeTransaction(0)).to.be.revertedWith("cannot execute tx - voting by count");
         });
     });
 
@@ -427,7 +439,7 @@ describe("Receive Function", function () {
     
             await fundme.confirmProposal(0); // Only one confirmation
     
-            await expect(fundme.executeProposal(0)).to.be.revertedWith("cannot execute proposal");
+            await expect(fundme.executeProposal(0)).to.be.revertedWith("cannot execute proposal - voting by count");
         });
     });
     

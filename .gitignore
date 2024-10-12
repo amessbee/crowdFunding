@@ -1,17 +1,12 @@
+# Ignore the node_modules directory, which contains all the installed dependencies
 node_modules
+
+# Ignore Hardhat cache and artifacts directories
+cache
+artifacts
+
+# Ignore the .env file, which typically contains environment variables
 .env
 
-# Hardhat files
-/cache
-/artifacts
-
-# TypeChain files
-/typechain
-/typechain-types
-
-# solidity-coverage files
-/coverage
-/coverage.json
-
-# Hardhat Ignition default folder for deployments against a local node
-ignition/deployments/chain-31337
+# Ignore Hardhat Ignition default folder for deployments against a local node
+ignition/deployments/chain-31337  # Directory used by Hardhat Ignition for storing deployment data for the local node with chain ID 31337

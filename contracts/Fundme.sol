@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
+
 import "hardhat/console.sol";
-// import "@openzeppelin/contracts/utils/Strings.sol";
+
+// This contract implements a decentralized crowdfunding platform where multiple owners can submit, confirm, and execute transactions.
+// The contract supports weighted voting based on contributions and allows for dynamic changes to the contract's parameters and owners through proposals.
 
 contract Fundme {
+    // Events to log various actions within the contract
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
     event SubmitTransaction(
         address indexed owner,
@@ -19,41 +23,46 @@ contract Fundme {
     event ConfirmProposal(address indexed owner, uint256 indexed proposalId);
     event ExecuteProposal(uint256 indexed proposalId);
 
-    address[] public owners;
-    mapping(address => bool) public isOwner;
-    mapping(address => uint256) public contributionsOf;
-    uint256 public totalContributions;
-    uint256 public percentageConfirmationsRequired;
-    uint256 public numConfirmationsRequired;
-    bool public votingByWeight;
+    // State variables
+    address[] public owners; // List of owners
+    mapping(address => bool) public isOwner; // Mapping to check if an address is an owner
+    mapping(address => uint256) public contributionsOf; // Mapping to track contributions of each owner
+    uint256 public totalContributions; // Total contributions made by all owners
+    uint256 public percentageConfirmationsRequired; // Percentage of confirmations required for weighted voting
+    uint256 public numConfirmationsRequired; // Number of confirmations required for non-weighted voting
+    bool public votingByWeight; // Flag to determine if voting is by weight or count
 
+    // Struct to represent a transaction
     struct Transaction {
-        address to;
-        uint256 value;
-        bytes data;
-        bool executed;
-        uint256 numConfirmations;
-        uint256 weight;
+        address to; // Address to which the transaction is made
+        uint256 value; // Value of the transaction
+        bytes data; // Data payload of the transaction
+        bool executed; // Flag to check if the transaction is executed
+        uint256 numConfirmations; // Number of confirmations received
+        uint256 weight; // Weight of the confirmations received
     }
 
+    // Struct to represent a proposal
     struct Proposal {
-        string proposalType; // "addOwner", "removeOwner", "changeParameter"
-        address newOwner; // If adding/removing an owner
-        uint256 newPercentageConfirmationsRequired;
-        uint256 newNumConfirmationsRequired;
-        bool newVotingByWeight;
-        uint256 numConfirmations;
-        uint256 weight;
-        bool executed;
+        string proposalType; // Type of proposal ("addOwner", "removeOwner", "changeParameter")
+        address newOwner; // New owner address (if applicable)
+        uint256 newPercentageConfirmationsRequired; // New percentage of confirmations required (if applicable)
+        uint256 newNumConfirmationsRequired; // New number of confirmations required (if applicable)
+        bool newVotingByWeight; // New voting by weight flag (if applicable)
+        uint256 numConfirmations; // Number of confirmations received
+        uint256 weight; // Weight of the confirmations received
+        bool executed; // Flag to check if the proposal is executed
     }
 
-    // mapping from tx index => owner => bool
+    // Mappings to track confirmations of transactions and proposals
     mapping(uint256 => mapping(address => bool)) public isConfirmed;
     mapping(uint256 => mapping(address => bool)) public isProposalConfirmed;
 
+    // Arrays to store transactions and proposals
     Transaction[] public transactions;
     Proposal[] public proposals;
 
+    // Modifiers to enforce various checks
     modifier onlyOwner() {
         require(isOwner[msg.sender], "not owner");
         _;
@@ -89,6 +98,7 @@ contract Fundme {
         _;
     }
 
+    // Constructor to initialize the contract with initial owners and parameters
     constructor(address[] memory _owners, uint256 _numConfirmationsRequired, uint256 _percentageConfirmationsRequired, bool _votingByWeight) {
         require(_owners.length > 0, "owners required");
         require(
@@ -114,6 +124,7 @@ contract Fundme {
         votingByWeight = _votingByWeight;
     }
 
+    // Fallback function to handle incoming ether
     receive() external payable {
         if (isOwner[msg.sender]) {
             contributionsOf[msg.sender] += msg.value;
@@ -122,16 +133,19 @@ contract Fundme {
         emit Deposit(msg.sender, msg.value, address(this).balance);
     }
     
+    // Function to get the contract's balance
     function getBalance() public view returns (uint256) {
         return address(this).balance;
     }
 
+    // Function to submit a new transaction
     function submitTransaction(address _to, uint256 _value, bytes memory _data) public onlyOwner {
         uint256 txIndex = transactions.length;
         transactions.push(Transaction({to: _to, value: _value, data: _data, executed: false, numConfirmations: 0, weight: 0}));
         emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data);
     }
 
+    // Function to confirm a transaction
     function confirmTransaction(uint256 _txIndex) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) notConfirmed(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         transaction.numConfirmations += 1;
@@ -140,6 +154,7 @@ contract Fundme {
         emit ConfirmTransaction(msg.sender, _txIndex);
     }
 
+    // Function to execute a confirmed transaction
     function executeTransaction(uint256 _txIndex) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         if (votingByWeight) {
@@ -149,7 +164,7 @@ contract Fundme {
             console.log("percentageConfirmationsRequired: %s", percentageConfirmationsRequired);
 
         } else {
-            require(transaction.numConfirmations >= numConfirmationsRequired, "cannot execute tx - voting by count") ;
+            require(transaction.numConfirmations >= numConfirmationsRequired, "cannot execute tx - voting by count");
             console.log("transaction.numConfirmations: %s", transaction.numConfirmations);
             console.log("numConfirmationsRequired: %s", numConfirmationsRequired);
 
@@ -160,6 +175,7 @@ contract Fundme {
         emit ExecuteTransaction(msg.sender, _txIndex);
     }
 
+    // Function to revoke a confirmation for a transaction
     function revokeConfirmation(uint256 _txIndex) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         require(isConfirmed[_txIndex][msg.sender], "tx not confirmed");
@@ -169,7 +185,7 @@ contract Fundme {
         emit RevokeConfirmation(msg.sender, _txIndex);
     }
 
-    // New functionality: Propose to change parameters or owners
+    // Function to submit a new proposal
     function submitProposal(
         string memory proposalType,
         address _newOwner,
@@ -192,6 +208,7 @@ contract Fundme {
         emit SubmitProposal(proposals.length - 1, proposalType);
     }
 
+    // Function to confirm a proposal
     function confirmProposal(uint256 _proposalId) public onlyOwner proposalExists(_proposalId) notProposalExecuted(_proposalId) notProposalConfirmed(_proposalId) {
         Proposal storage proposal = proposals[_proposalId];
         proposal.numConfirmations += 1;
@@ -200,11 +217,12 @@ contract Fundme {
         emit ConfirmProposal(msg.sender, _proposalId);
     }
 
+    // Function to execute a confirmed proposal
     function executeProposal(uint256 _proposalId) public onlyOwner proposalExists(_proposalId) notProposalExecuted(_proposalId) {
         Proposal storage proposal = proposals[_proposalId];
 
         if (votingByWeight) {
-            require(proposal.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute proposal - voting by weight" ) ;
+            require(proposal.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute proposal - voting by weight");
         } else {
             require(proposal.numConfirmations >= numConfirmationsRequired, "cannot execute proposal - voting by count");
         }
@@ -234,26 +252,30 @@ contract Fundme {
         emit ExecuteProposal(_proposalId);
     }
 
+    // Function to get the list of owners
     function getOwners() public view returns (address[] memory) {
         return owners;
     }
 
+    // Function to get the count of transactions
     function getTransactionCount() public view returns (uint256) {
         return transactions.length;
     }
 
+    // Function to get details of a specific transaction
     function getTransaction(uint256 _txIndex) public view returns (address to, uint256 value, bytes memory data, bool executed, uint256 numConfirmations, uint256 weight) {
         Transaction storage transaction = transactions[_txIndex];
         return (transaction.to, transaction.value, transaction.data, transaction.executed, transaction.numConfirmations, transaction.weight);
     }
 
-    function getProposal(uint256 _proposalId) public view returns (string memory proposalType, address newOwner, uint256 newPercentageConfirmationsRequired, uint256 newNumConfirmationsRequired,  bool newVotingByWeight, uint256 numConfirmations,uint256 weight, bool executed) {
+    // Function to get details of a specific proposal
+    function getProposal(uint256 _proposalId) public view returns (string memory proposalType, address newOwner, uint256 newPercentageConfirmationsRequired, uint256 newNumConfirmationsRequired, bool newVotingByWeight, uint256 numConfirmations, uint256 weight, bool executed) {
         Proposal storage proposal = proposals[_proposalId];
         return (proposal.proposalType, proposal.newOwner, proposal.newPercentageConfirmationsRequired, proposal.newNumConfirmationsRequired, proposal.newVotingByWeight, proposal.numConfirmations, proposal.weight, proposal.executed);
     }
 
+    // Function to get the count of proposals
     function getProposalCount() public view returns (uint256) {
         return proposals.length;
     }
-
 }
