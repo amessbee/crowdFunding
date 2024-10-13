@@ -6,7 +6,7 @@ import "hardhat/console.sol";
 // This contract implements a decentralized crowdfunding platform where multiple memebers can submit, approve, and execute projects.
 // The contract supports weighted voting based on contributions and allows for dynamic changes to the contract's parameters and members through proposals.
 
-contract Fundme {
+contract CrowdFunding {
     // Events to log various actions within the contract
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
     event SubmitProject(

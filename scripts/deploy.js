@@ -1,23 +1,23 @@
 /**
  * @file deploy.js
- * @description This script deploys the Fundme smart contract to the Ethereum network and saves the contract's ABI and address to a JavaScript file for frontend use.
+ * @description This script deploys the CrowdFunding smart contract to the Ethereum network and saves the contract's ABI and address to a JavaScript file for frontend use.
  * 
  * The script performs the following steps:
- * 1. Retrieves the contract factory for the Fundme contract.
- * 2. Deploys the Fundme contract with specified member addresses and other parameters.
+ * 1. Retrieves the contract factory for the CrowdFunding contract.
+ * 2. Deploys the CrowdFunding contract with specified member addresses and other parameters.
  * 3. Waits for the deployment to complete and retrieves the contract address.
  * 4. Writes the contract's ABI and address to a specified JavaScript file for frontend integration.
  */
 
 const fs = require('fs'); // Import the file system module to write files
-const contractName = "Fundme"; // Name of the contract to deploy
+const contractName = "CrowdFunding"; // Name of the contract to deploy
 
 async function main () {
   // We get the contract to deploy
-  const Fundme = await ethers.getContractFactory('Fundme'); // Retrieve the contract factory for Fundme
-  console.log('Deploying Fundme...'); // Log the deployment process
+  const CrowdFunding = await ethers.getContractFactory('CrowdFunding'); // Retrieve the contract factory for CrowdFunding
+  console.log('Deploying CrowdFunding...'); // Log the deployment process
   
-  // List of member addresses for the Fundme contract
+  // List of member addresses for the CrowdFunding contract
   const memberAddresses = [
     "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199", 
     "0xdD2FD4581271e230360230F9337D5c0430Bf44C0", 
@@ -34,11 +34,11 @@ async function main () {
   ];
   const minimumVotes = 1; // Minimum votes required for a proposal to pass
 
-  // Deploy the Fundme contract with the specified parameters
-  const fundme = await Fundme.deploy(memberAddresses, minimumVotes, 50, false);
-  await fundme.waitForDeployment(); // Wait for the deployment to complete
-  const contractAddress = await fundme.getAddress(); // Retrieve the deployed contract's address
-  console.log('Fundme deployed to:', contractAddress); // Log the contract address
+  // Deploy the CrowdFunding contract with the specified parameters
+  const crowdFunding = await CrowdFunding.deploy(memberAddresses, minimumVotes, 50, false);
+  await crowdFunding.waitForDeployment(); // Wait for the deployment to complete
+  const contractAddress = await crowdFunding.getAddress(); // Retrieve the deployed contract's address
+  console.log('CrowdFunding deployed to:', contractAddress); // Log the contract address
 
   // Append the contract address and ABI to contractABI.js for frontend use
   const outputFilePath = './ui/src/contractABI.js'; // Path to the output file

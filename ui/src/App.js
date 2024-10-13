@@ -1,7 +1,7 @@
 /**
  * App.js
  * 
- * This file contains the main component for the FundMe Contract Dashboard application.
+ * This file contains the main component for the CrowdFunding Contract Dashboard application.
  * It uses React and ethers.js to interact with an Ethereum smart contract.
  * The application allows users to donate funds to the contract, view projects, and manage proposals.
  * 
@@ -13,7 +13,7 @@
  * - bootstrap: A CSS framework for building responsive web applications.
  * 
  * Components:
- * - Proposals: Manages and displays proposals for the FundMe committee.
+ * - Proposals: Manages and displays proposals for the CrowdFunding committee.
  * - Projects: Displays projects related to the contract.
  * - SendEth: Allows users to send Ether to the contract.
  * 
@@ -114,7 +114,7 @@ const App = () => {
 
   return (
     <Container>
-      <h1 className="mt-4 text-center">FundMe Contract Dashboard</h1>
+      <h1 className="mt-4 text-center">CrowdFunding Contract Dashboard</h1>
       <Collapse in={showAlert}>
         <div>
           <CSSTransition
@@ -155,7 +155,7 @@ const App = () => {
           <Projects contract={contract} showAlertMessage={showAlertMessage} />
         </Tab>
 
-        <Tab eventKey="proposals" title="FundMe Committee Admin Proposals">
+        <Tab eventKey="proposals" title="CrowdFunding Committee Admin Proposals">
           <Proposals contract={contract} showAlertMessage={showAlertMessage} />
         </Tab>
       </Tabs>

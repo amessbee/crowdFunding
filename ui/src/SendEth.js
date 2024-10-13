@@ -51,7 +51,7 @@ const SendEth = ({
     value: ethAmountInWei, // The amount of ETH to send in Wei
     });
     await tx.wait(); // Wait for the transaction to be mined
-    showAlertMessage(`Sent ${ethAmount} ETH to the FundMe!`); // Show success message
+    showAlertMessage(`Sent ${ethAmount} ETH to the CrowdFunding!`); // Show success message
     setEthAmount(10); // Reset the ETH amount input
     updateContractBalance(contract); // Update the contract balance
   } catch (error) {
@@ -63,8 +63,8 @@ const SendEth = ({
   return (
   <Row className="my-4">
     <Col>
-    <h3>Donate Funds to FundMe</h3>
-    <p>Current FundMe Contract Balance: {contractBalance} ETH!!</p>
+    <h3>Donate Funds to CrowdFunding</h3>
+    <p>Current CrowdFunding Contract Balance: {contractBalance} ETH!!</p>
     <Form onSubmit={handleSendEth}>
       <Form.Group>
       <Form.Label>Amount of ETH to donate</Form.Label>
