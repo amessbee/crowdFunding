@@ -4,7 +4,7 @@
  * 
  * The script performs the following steps:
  * 1. Retrieves the contract factory for the Fundme contract.
- * 2. Deploys the Fundme contract with specified owner addresses and other parameters.
+ * 2. Deploys the Fundme contract with specified member addresses and other parameters.
  * 3. Waits for the deployment to complete and retrieves the contract address.
  * 4. Writes the contract's ABI and address to a specified JavaScript file for frontend integration.
  */
@@ -17,8 +17,8 @@ async function main () {
   const Fundme = await ethers.getContractFactory('Fundme'); // Retrieve the contract factory for Fundme
   console.log('Deploying Fundme...'); // Log the deployment process
   
-  // List of owner addresses for the Fundme contract
-  const ownerAddresses = [
+  // List of member addresses for the Fundme contract
+  const memberAddresses = [
     "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199", 
     "0xdD2FD4581271e230360230F9337D5c0430Bf44C0", 
     "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E", 
@@ -35,13 +35,13 @@ async function main () {
   const minimumVotes = 1; // Minimum votes required for a proposal to pass
 
   // Deploy the Fundme contract with the specified parameters
-  const fundme = await Fundme.deploy(ownerAddresses, minimumVotes, 50, false);
+  const fundme = await Fundme.deploy(memberAddresses, minimumVotes, 50, false);
   await fundme.waitForDeployment(); // Wait for the deployment to complete
   const contractAddress = await fundme.getAddress(); // Retrieve the deployed contract's address
   console.log('Fundme deployed to:', contractAddress); // Log the contract address
 
   // Append the contract address and ABI to contractABI.js for frontend use
-  const outputFilePath = './fundme-ui/src/contractABI.js'; // Path to the output file
+  const outputFilePath = './ui/src/contractABI.js'; // Path to the output file
   const contractABI = require(`../artifacts/contracts/${contractName}.sol/${contractName}.json`).abi; // Retrieve the contract's ABI
   
   // Content to be written to the output file

@@ -4,7 +4,7 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_owners",
+        "name": "_members",
         "type": "address[]"
       },
       {
@@ -32,7 +32,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "member",
         "type": "address"
       },
       {
@@ -51,7 +51,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "member",
         "type": "address"
       },
       {
@@ -108,7 +108,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "member",
         "type": "address"
       },
       {
@@ -127,7 +127,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "member",
         "type": "address"
       },
       {
@@ -165,7 +165,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "member",
         "type": "address"
       },
       {
@@ -282,7 +282,7 @@
   },
   {
     "inputs": [],
-    "name": "getOwners",
+    "name": "getMembers",
     "outputs": [
       {
         "internalType": "address[]",
@@ -310,7 +310,7 @@
       },
       {
         "internalType": "address",
-        "name": "newOwner",
+        "name": "newMember",
         "type": "address"
       },
       {
@@ -449,7 +449,7 @@
         "type": "address"
       }
     ],
-    "name": "isOwner",
+    "name": "isMember",
     "outputs": [
       {
         "internalType": "bool",
@@ -485,19 +485,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "numConfirmationsRequired",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -505,12 +492,25 @@
         "type": "uint256"
       }
     ],
-    "name": "owners",
+    "name": "members",
     "outputs": [
       {
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "numConfirmationsRequired",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -546,7 +546,7 @@
       },
       {
         "internalType": "address",
-        "name": "newOwner",
+        "name": "newMember",
         "type": "address"
       },
       {
@@ -605,7 +605,7 @@
       },
       {
         "internalType": "address",
-        "name": "_newOwner",
+        "name": "_newMember",
         "type": "address"
       },
       {
@@ -727,5 +727,5 @@
     "type": "receive"
   }
 ];
-    export const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+    export const contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
   

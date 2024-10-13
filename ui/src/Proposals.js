@@ -1,23 +1,47 @@
+/**
+ * Proposals Component
+ * 
+ * This component is responsible for displaying and managing proposals related to the administration of a crowdfunding contract.
+ * It allows users to view active proposals, vote on them, and execute them if they have passed. Additionally, it provides 
+ * functionality to submit new proposals for adding/removing members, changing voting methods, and modifying confirmation requirements.
+ * 
+ * Props:
+ * - contract: The smart contract instance to interact with.
+ * - showAlertMessage: Function to display alert messages.
+ * - contractParameters: Additional parameters for the contract (not used in this code).
+ * 
+ * State:
+ * - proposals: List of proposals fetched from the contract.
+ * - activeTab: Currently active tab in the proposal submission form.
+ * - newMember: Address of the new member to be added or removed.
+ * - newNumConfirmations: New number of confirmations required for a proposal to pass.
+ * - newWeightConfirmations: New weight of confirmations required for a proposal to pass.
+ * - votingByWeight: Boolean indicating if voting is by weight or count.
+ * - members: List of current members fetched from the contract.
+ */
+
 import React, { useState, useEffect } from "react";
 import { Table, Button, Row, Col, Form, Tabs, Tab } from "react-bootstrap";
 import { ethers } from "ethers";
 
 const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
   const [proposals, setProposals] = useState([]);
-  const [activeTab, setActiveTab] = useState("addOwner");
-  const [newOwner, setNewOwner] = useState("");
+  const [activeTab, setActiveTab] = useState("addMember");
+  const [newMember, setNewMember] = useState("");
   const [newNumConfirmations, setNewNumConfirmations] = useState("");
   const [newWeightConfirmations, setNewWeightConfirmations] = useState("");
   const [votingByWeight, setVotingByWeight] = useState(false);
-  const [owners, setOwners] = useState([]);  // To store the list of owners
+  const [members, setMembers] = useState([]);  // To store the list of members
 
+  // Load proposals and members when the contract is available
   useEffect(() => {
     if (contract) {
       loadProposals();
-      loadOwners();  // Load owners on component mount
+      loadMembers();  // Load members on component mount
     }
   }, [contract]);
 
+  // Fetch proposals from the contract
   const loadProposals = async () => {
     const proposalCount = await contract.getProposalCount();
     const loadedProposals = [];
@@ -28,7 +52,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
       const mappedProposal = {
         id: i,
         proposalType: proposal.proposalType || proposal[0],
-        newOwner: proposal.newOwner || proposal[1],
+        newMember: proposal.newMember || proposal[1],
         newPercentageConfirmationsRequired: proposal.newPercentageConfirmationsRequired || proposal[2],
         newNumConfirmationsRequired: proposal.newNumConfirmationsRequired || proposal[3],
         newVotingByWeight: proposal.newVotingByWeight || proposal[4],
@@ -42,15 +66,17 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
     setProposals(loadedProposals);
   };
 
-  const loadOwners = async () => {
+  // Fetch the list of members from the contract
+  const loadMembers = async () => {
     try {
-      const ownersList = await contract.getOwners();  // Fetch the list of owners from the contract
-      setOwners(ownersList);  // Store owners in state
+      const membersList = await contract.getMembers();
+      setMembers(membersList);
     } catch (error) {
-      showAlertMessage("Error loading owners.");
+      showAlertMessage("Error loading members.");
     }
   };
 
+  // Handle voting on a proposal
   const handleVoteProposal = async (proposalId) => {
     try {
       const tx = await contract.confirmProposal(proposalId);
@@ -62,6 +88,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
     }
   };
 
+  // Handle executing a proposal
   const handleExecuteProposal = async (proposalId) => {
     try {
       const tx = await contract.executeProposal(proposalId);
@@ -74,18 +101,20 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
     }
   };
 
+  // Handle submitting a new proposal
   const handleSubmitProposal = async (e) => {
     e.preventDefault();
     try {
-      let proposalNewOwner = ethers.ZeroAddress;
+      let proposalNewMember = ethers.ZeroAddress;
       let proposalNewPercentage = 0;
       let proposalNewNumConfirmations = 0;
       let proposalVotingByWeight = votingByWeight;
 
-      if (activeTab === "addOwner") {
-        proposalNewOwner = newOwner;
-      } else if (activeTab === "removeOwner") {
-        proposalNewOwner = newOwner;
+      // Determine the type of proposal and set the appropriate values
+      if (activeTab === "addMember") {
+        proposalNewMember = newMember;
+      } else if (activeTab === "removeMember") {
+        proposalNewMember = newMember;
       } else if (activeTab === "changeVotingMethod") {
         proposalVotingByWeight = votingByWeight;
       } else if (activeTab === "changePassingNumConfirmations") {
@@ -94,9 +123,10 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
         proposalNewPercentage = newWeightConfirmations;
       }
 
+      // Submit the proposal to the contract
       const tx = await contract.submitProposal(
         activeTab,
-        proposalNewOwner,
+        proposalNewMember,
         proposalNewPercentage,
         proposalNewNumConfirmations,
         proposalVotingByWeight
@@ -130,10 +160,10 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
                 <tr key={proposal.id} style={{ color: proposal.executed ? 'green' : 'black' }}>
                   <td>{proposal.proposalType}</td>
                   <td>
-                    {proposal.proposalType === "addOwner" &&
-                      `Add Member: ${proposal.newOwner}`}
-                    {proposal.proposalType === "removeOwner" &&
-                      `Remove Member: ${proposal.newOwner}`}
+                    {proposal.proposalType === "addMember" &&
+                      `Add Member: ${proposal.newMember}`}
+                    {proposal.proposalType === "removeMember" &&
+                      `Remove Member: ${proposal.newMember}`}
                     {proposal.proposalType === "changeVotingMethod" &&
                       `Voting Method: ${proposal.newVotingByWeight ? "Voting by Weight" : "Voting by Count"}`}
                     {proposal.proposalType === "changePassingNumConfirmations" &&
@@ -170,14 +200,14 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
         <Col>
         <h3>Submit a New Admin Proposal</h3>
           <Tabs activeKey={activeTab} onSelect={(tab) => setActiveTab(tab)} className="mb-3">
-            <Tab eventKey="addOwner" title="Add a New Member">
+            <Tab eventKey="addMember" title="Add a New Member">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
                   <Form.Label>New Committee Member Address</Form.Label>
                   <Form.Control
                     type="text"
-                    value={newOwner}
-                    onChange={(e) => setNewOwner(e.target.value)}
+                    value={newMember}
+                    onChange={(e) => setNewMember(e.target.value)}
                     placeholder="Enter new committee member address"
                   />
                 </Form.Group>
@@ -187,18 +217,18 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               </Form>
             </Tab>
 
-            <Tab eventKey="removeOwner" title="Remove a Member">
+            <Tab eventKey="removeMember" title="Remove a Member">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
                   <Form.Label>Select Committee Member to Remove</Form.Label>
                   <Form.Control
                     as="select"
-                    value={newOwner}
-                    onChange={(e) => setNewOwner(e.target.value)}
+                    value={newMember}
+                    onChange={(e) => setNewMember(e.target.value)}
                   >
-                    {owners.map((owner) => (
-                      <option key={owner} value={owner}>
-                        {owner}
+                    {members.map((member) => (
+                      <option key={member} value={member}>
+                        {member}
                       </option>
                     ))}
                   </Form.Control>

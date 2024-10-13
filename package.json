@@ -15,7 +15,7 @@
     "start": "npm run contract && npm run ui",
     "chain": "hardhat node ",
     "contract": "hardhat compile && hardhat run scripts/deploy.js --network localhost",
-    "ui": "cd fundme-ui && npm start && open http://localhost:3000/",
+    "ui": "cd ui && npm start && open http://localhost:3000/",
     "test": "hardhat test"
   }
 }

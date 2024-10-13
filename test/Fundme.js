@@ -4,29 +4,29 @@ const { ethers } = require("hardhat");
 /**
  * This test suite is designed to comprehensively test the functionality of a smart contract called "Fundme" that operates 
  * with weighted voting and multi-signature transaction approval. It covers various aspects of the contract's functionality, 
- * including deployment, ownership management, transaction submission, confirmation, execution, and revocation, as well as 
- * ensuring that only valid owners can submit and confirm transactions. The tests also cover edge cases such as preventing 
+ * including deployment, membership management, transaction submission, confirmation, execution, and revocation, as well as 
+ * ensuring that only valid members can submit and confirm transactions. The tests also cover edge cases such as preventing 
  * duplicate confirmations, handling insufficient transaction weight for execution, and reverting on unauthorized actions.
  * Additionally, the suite verifies the contract's behavior in handling ETH contributions, tracking contributions, and emitting 
- * appropriate events. Finally, proposals for adding/removing owners or changing contract parameters are tested, ensuring that 
+ * appropriate events. Finally, proposals for adding/removing members or changing contract parameters are tested, ensuring that 
  * they can be submitted, voted on, and executed under the correct conditions.
  */
 
 
 describe("Fundme with votingByWeight", function () {
-    let Fundme, fundme, owner, addr1, addr2, addr3, addrs;
+    let Fundme, fundme, member, addr1, addr2, addr3, addrs;
     let votingByWeight = true;
 
     beforeEach(async function () {
         Fundme = await ethers.getContractFactory("Fundme");
-        [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-        fundme = await Fundme.deploy([owner.address, addr1.address, addr2.address, addr3.address], 2, 50, votingByWeight);
+        [member, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+        fundme = await Fundme.deploy([member.address, addr1.address, addr2.address, addr3.address], 2, 50, votingByWeight);
         await fundme.waitForDeployment();
     });
 
 describe("Deployment", function () {
-        it("Should set the right owners", async function () {
-            expect(await fundme.getOwners()).to.deep.equal([owner.address, addr1.address, addr2.address, addr3.address]);
+        it("Should set the right members", async function () {
+            expect(await fundme.getMembers()).to.deep.equal([member.address, addr1.address, addr2.address, addr3.address]);
         });
 
         it("Should set the right percentage of confirmations required", async function () {
@@ -34,11 +34,11 @@ describe("Deployment", function () {
         });
     });
 
-describe("Owners", function () {
-        it("Should print all owners", async function () {
-            const owners = await fundme.getOwners();
-            console.log("Owners:", owners);
-            expect(owners).to.deep.equal([owner.address, addr1.address, addr2.address, addr3.address]);
+describe("Members", function () {
+        it("Should print all members", async function () {
+            const members = await fundme.getMembers();
+            console.log("Members:", members);
+            expect(members).to.deep.equal([member.address, addr1.address, addr2.address, addr3.address]);
         });
     });
 
@@ -122,8 +122,8 @@ describe("Transactions", function () {
     });
 
 describe("Modifiers", function () {
-        it("Should revert if not owner tries to submit transaction", async function () {
-            await expect(fundme.connect(addrs[0]).submitTransaction(addr1.address, 100, "0x")).to.be.revertedWith("not owner");
+        it("Should revert if not member tries to submit transaction", async function () {
+            await expect(fundme.connect(addrs[0]).submitTransaction(addr1.address, 100, "0x")).to.be.revertedWith("not member");
         });
 
         it("Should revert if transaction does not exist", async function () {
@@ -157,7 +157,7 @@ describe("Modifiers", function () {
     });
 
 describe("Receive Function", function () {
-        it("Should update contributions and totalContributions for owners", async function () {
+        it("Should update contributions and totalContributions for members", async function () {
             await addr1.sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
@@ -170,7 +170,7 @@ describe("Receive Function", function () {
             expect(totalContributions).to.equal(ethers.parseEther("1.0"));
         });
 
-        it("Should not update contributions for non-owners", async function () {
+        it("Should not update contributions for non-members", async function () {
             await addrs[0].sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
@@ -204,19 +204,19 @@ describe("Receive Function", function () {
 });
 
 describe("Fundme", function () {
-    let Fundme, fundme, owner, addr1, addr2, addr3, addrs;
+    let Fundme, fundme, member, addr1, addr2, addr3, addrs;
     let votingByWeight = false;
 
     beforeEach(async function () {
         Fundme = await ethers.getContractFactory("Fundme");
-        [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
-        fundme = await Fundme.deploy([owner.address, addr1.address, addr2.address, addr3.address], 2, 51, votingByWeight);
+        [member, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+        fundme = await Fundme.deploy([member.address, addr1.address, addr2.address, addr3.address], 2, 51, votingByWeight);
         await fundme.waitForDeployment();
     });
 
 describe("Deployment", function () {
-        it("Should set the right owners", async function () {
-            expect(await fundme.getOwners()).to.deep.equal([owner.address, addr1.address, addr2.address, addr3.address]);
+        it("Should set the right members", async function () {
+            expect(await fundme.getMembers()).to.deep.equal([member.address, addr1.address, addr2.address, addr3.address]);
         });
 
         it("Should set the right number of confirmations required", async function () {
@@ -224,11 +224,11 @@ describe("Deployment", function () {
         });
     });
 
-describe("Owners", function () {
-        it("Should print all owners", async function () {
-            const owners = await fundme.getOwners();
-            console.log("Owners:", owners);
-            expect(owners).to.deep.equal([owner.address, addr1.address, addr2.address, addr3.address]);
+describe("Members", function () {
+        it("Should print all members", async function () {
+            const members = await fundme.getMembers();
+            console.log("Members:", members);
+            expect(members).to.deep.equal([member.address, addr1.address, addr2.address, addr3.address]);
         });
     });
 
@@ -286,8 +286,8 @@ describe("Transactions", function () {
     });
 
 describe("Modifiers", function () {
-        it("Should revert if not owner tries to submit transaction", async function () {
-            await expect(fundme.connect(addrs[0]).submitTransaction(addr1.address, 100, "0x")).to.be.revertedWith("not owner");
+        it("Should revert if not member tries to submit transaction", async function () {
+            await expect(fundme.connect(addrs[0]).submitTransaction(addr1.address, 100, "0x")).to.be.revertedWith("not member");
         });
 
         it("Should revert if transaction does not exist", async function () {
@@ -317,7 +317,7 @@ describe("Modifiers", function () {
     });
 
 describe("Receive Function", function () {
-        it("Should update contributions and totalContributions for owners", async function () {
+        it("Should update contributions and totalContributions for members", async function () {
             await addr1.sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
@@ -330,7 +330,7 @@ describe("Receive Function", function () {
             expect(totalContributions).to.equal(ethers.parseEther("1.0"));
         });
 
-        it("Should not update contributions for non-owners", async function () {
+        it("Should not update contributions for non-members", async function () {
             await addrs[0].sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
@@ -362,7 +362,7 @@ describe("Receive Function", function () {
         });
     });
     describe("Proposals", function () {
-        it("Should allow an owner to propose a change in parameters", async function () {
+        it("Should allow an member to propose a change in parameters", async function () {
             await fundme.submitProposal("changeParameter", '0x0000000000000000000000000000000000000000' , 60, 3, true);
             const proposal = await fundme.getProposal(0);
     
@@ -372,23 +372,23 @@ describe("Receive Function", function () {
             expect(proposal.newVotingByWeight).to.be.true;
         });
     
-        it("Should allow an owner to propose adding a new owner", async function () {
-            await fundme.submitProposal("addOwner", addrs[0].address, 0, 0, false);
+        it("Should allow an member to propose adding a new member", async function () {
+            await fundme.submitProposal("addMember", addrs[0].address, 0, 0, false);
             const proposal = await fundme.getProposal(0);
     
-            expect(proposal.proposalType).to.equal("addOwner");
-            expect(proposal.newOwner).to.equal(addrs[0].address);
+            expect(proposal.proposalType).to.equal("addMember");
+            expect(proposal.newMember).to.equal(addrs[0].address);
         });
     
-        it("Should allow an owner to propose removing an owner", async function () {
-            await fundme.submitProposal("removeOwner", addr1.address, 0, 0, false);
+        it("Should allow an member to propose removing an member", async function () {
+            await fundme.submitProposal("removeMember", addr1.address, 0, 0, false);
             const proposal = await fundme.getProposal(0);
     
-            expect(proposal.proposalType).to.equal("removeOwner");
-            expect(proposal.newOwner).to.equal(addr1.address);
+            expect(proposal.proposalType).to.equal("removeMember");
+            expect(proposal.newMember).to.equal(addr1.address);
         });
     
-        it("Should allow owners to vote on proposals", async function () {
+        it("Should allow members to vote on proposals", async function () {
             await fundme.connect(addr1).submitProposal("changeParameter", '0x0000000000000000000000000000000000000000' , 60, 3, true);
     
             await fundme.connect(addr2).confirmProposal(0);
@@ -410,28 +410,28 @@ describe("Receive Function", function () {
             expect(await fundme.votingByWeight()).to.be.true;
         });
     
-        it("Should execute adding a new owner once enough votes are accumulated", async function () {
-            await fundme.submitProposal("addOwner", addrs[0].address, 0, 0, false);
+        it("Should execute adding a new member once enough votes are accumulated", async function () {
+            await fundme.submitProposal("addMember", addrs[0].address, 0, 0, false);
     
             await fundme.confirmProposal(0);
             await fundme.connect(addr1).confirmProposal(0);
     
             await fundme.executeProposal(0);
     
-            const owners = await fundme.getOwners();
-            expect(owners).to.include(addrs[0].address);
+            const members = await fundme.getMembers();
+            expect(members).to.include(addrs[0].address);
         });
     
-        it("Should execute removing an owner once enough votes are accumulated", async function () {
-            await fundme.submitProposal("removeOwner", addr1.address, 0, 0, false);
+        it("Should execute removing an member once enough votes are accumulated", async function () {
+            await fundme.submitProposal("removeMember", addr1.address, 0, 0, false);
     
             await fundme.confirmProposal(0);
             await fundme.connect(addr2).confirmProposal(0);
     
             await fundme.executeProposal(0);
     
-            const owners = await fundme.getOwners();
-            expect(owners).to.not.include(addr1.address);
+            const members = await fundme.getMembers();
+            expect(members).to.not.include(addr1.address);
         });
     
         it("Should not execute a proposal without enough votes", async function () {

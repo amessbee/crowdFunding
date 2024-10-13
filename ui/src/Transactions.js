@@ -1,26 +1,43 @@
+/**
+ * Transactions.js
+ * 
+ * This component handles the display and interaction with project transactions in a crowdfunding application.
+ * It allows users to view active projects, vote on them, execute them, and submit new projects.
+ * 
+ * Dependencies:
+ * - React: For building the UI components.
+ * - react-bootstrap: For UI components like Table, Button, Row, Col, and Form.
+ * - ethers: For interacting with the Ethereum blockchain.
+ */
+
 import React, { useState, useEffect } from "react";
 import { Table, Button, Row, Col, Form } from "react-bootstrap";
 import { ethers } from "ethers";
 
 const Projects = ({ contract, showAlertMessage }) => {
+  // State to store the list of transactions
   const [transactions, setTransactions] = useState([]);
+  // State to store the address to which the new project will be sent
   const [toAddress, setToAddress] = useState("");
+  // State to store the value of the new project
   const [value, setValue] = useState("");
 
+  // Effect to load transactions when the contract is available
   useEffect(() => {
     if (contract) {
       loadTransactions();
     }
   }, [contract]);
 
+  // Function to load transactions from the contract
   const loadTransactions = async () => {
     try {
       const transactionCount = await contract.getTransactionCount();
       const loadedTransactions = [];
       for (let i = 0; i < transactionCount; i++) {
-      const [to, value, data, executed, numConfirmations, weight] = await contract.getTransaction(i);
-      loadedTransactions.push({ id: i, to, value, data, executed, numConfirmations, weight });
-      console.log("weight ", weight);
+        const [to, value, data, executed, numConfirmations, weight] = await contract.getTransaction(i);
+        loadedTransactions.push({ id: i, to, value, data, executed, numConfirmations, weight });
+        console.log("weight ", weight);
       }
       setTransactions(loadedTransactions);
     } catch (error) {
@@ -29,6 +46,7 @@ const Projects = ({ contract, showAlertMessage }) => {
     }
   };
 
+  // Function to handle voting on a transaction
   const handleVoteTransaction = async (txId) => {
     try {
       const tx = await contract.confirmTransaction(txId);
@@ -40,6 +58,7 @@ const Projects = ({ contract, showAlertMessage }) => {
     }
   };
 
+  // Function to handle executing a transaction
   const handleExecuteTransaction = async (txId) => {
     try {
       const tx = await contract.executeTransaction(txId);
@@ -51,6 +70,7 @@ const Projects = ({ contract, showAlertMessage }) => {
     }
   };
 
+  // Function to handle submitting a new transaction
   const handleSubmitTransaction = async (e) => {
     e.preventDefault();
     try {
