@@ -1,58 +1,83 @@
+/**
+ * Projects.js
+ * 
+ * This component handles the display and interaction with project projects in a crowdfunding application.
+ * It allows users to view active projects, vote on them, execute them, and submit new projects.
+ * 
+ * Dependencies:
+ * - React: For building the UI components.
+ * - react-bootstrap: For UI components like Table, Button, Row, Col, and Form.
+ * - ethers: For interacting with the Ethereum blockchain.
+ */
+
 import React, { useState, useEffect } from "react";
 import { Table, Button, Row, Col, Form } from "react-bootstrap";
 import { ethers } from "ethers";
 
 const Projects = ({ contract, showAlertMessage }) => {
-  const [transactions, setTransactions] = useState([]);
+  // State to store the list of projects
+  const [projects, setProjects] = useState([]);
+  // State to store the address to which the new project will be sent
   const [toAddress, setToAddress] = useState("");
+  // State to store the value of the new project
   const [value, setValue] = useState("");
 
+  // Effect to load projects when the contract is available
   useEffect(() => {
     if (contract) {
-      loadTransactions();
+      loadProjects();
     }
   }, [contract]);
 
-  const loadTransactions = async () => {
-    const transactionCount = await contract.getTransactionCount();
-    const loadedTransactions = [];
-    for (let i = 0; i < transactionCount; i++) {
-      const [to, value, data, executed, numConfirmations, weight] = await contract.getTransaction(i);
-      loadedTransactions.push({ id: i, to, value, data, executed, numConfirmations, weight });
-      console.log("weight ", weight);
+  // Function to load projects from the contract
+  const loadProjects = async () => {
+    try {
+      const projectCount = await contract.getProjectCount();
+      const loadedProjects = [];
+      for (let i = 0; i < projectCount; i++) {
+        const [to, value, data, executed, numApprovals, weight] = await contract.getProject(i);
+        loadedProjects.push({ id: i, to, value, data, executed, numApprovals, weight });
+        console.log("weight ", weight);
+      }
+      setProjects(loadedProjects);
+    } catch (error) {
+      showAlertMessage("Error loading projects.");
+      console.error("Error loading projects:", error);
     }
-    setTransactions(loadedTransactions);
   };
 
-  const handleVoteTransaction = async (txId) => {
+  // Function to handle voting on a project
+  const handleVoteProject = async (txId) => {
     try {
-      const tx = await contract.confirmTransaction(txId);
+      const tx = await contract.approveProject(txId);
       await tx.wait();
       showAlertMessage("Project vote successful!");
-      loadTransactions();
+      loadProjects();
     } catch (error) {
       showAlertMessage("Error voting on project.");
     }
   };
 
-  const handleExecuteTransaction = async (txId) => {
+  // Function to handle executing a project
+  const handleExecuteProject = async (txId) => {
     try {
-      const tx = await contract.executeTransaction(txId);
+      const tx = await contract.executeProject(txId);
       await tx.wait();
       showAlertMessage("Project executed successfully!");
-      loadTransactions();
+      loadProjects();
     } catch (error) {
       showAlertMessage("Error executing project.");
     }
   };
 
-  const handleSubmitTransaction = async (e) => {
+  // Function to handle submitting a new project
+  const handleSubmitProject = async (e) => {
     e.preventDefault();
     try {
-      const tx = await contract.submitTransaction(toAddress, ethers.parseEther(value), ethers.toUtf8Bytes("Project 51"));
+      const tx = await contract.submitProject(toAddress, ethers.parseEther(value), ethers.toUtf8Bytes("Project 51"));
       await tx.wait();
       showAlertMessage("Project submitted successfully!");
-      loadTransactions();
+      loadProjects();
     } catch (error) {
       showAlertMessage("Error submitting project.");
       console.error("Error submitting project:", error);
@@ -77,15 +102,15 @@ const Projects = ({ contract, showAlertMessage }) => {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx) => (
+              {projects.map((tx) => (
                 <tr key={tx.id} style={{ color: tx.executed ? 'green' : 'black' }}>
                   <td>{tx.to}</td>
                   <td>{ethers.formatEther(tx.value)} ETH</td>
-                  <td>{tx.numConfirmations.toString()}</td>
+                  <td>{tx.numApprovals.toString()}</td>
                   <td>{ethers.formatEther(tx.weight)}</td>
                   <td>
                     <Button
-                      onClick={() => handleVoteTransaction(tx.id)}
+                      onClick={() => handleVoteProject(tx.id)}
                       variant="primary"
                       className="me-2"
                       disabled={tx.executed}
@@ -93,7 +118,7 @@ const Projects = ({ contract, showAlertMessage }) => {
                       Vote
                     </Button>
                     <Button
-                      onClick={() => handleExecuteTransaction(tx.id)}
+                      onClick={() => handleExecuteProject(tx.id)}
                       variant="success"
                       disabled={tx.executed}
                     >
@@ -110,7 +135,7 @@ const Projects = ({ contract, showAlertMessage }) => {
       <Row className="my-4">
         <Col>
           <h3>Champion a New Project</h3>
-          <Form onSubmit={handleSubmitTransaction}>
+          <Form onSubmit={handleSubmitProject}>
             <Form.Group>
               <Form.Label>To Address</Form.Label>
               <Form.Control
