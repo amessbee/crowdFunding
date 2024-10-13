@@ -14,14 +14,19 @@ const Projects = ({ contract, showAlertMessage }) => {
   }, [contract]);
 
   const loadTransactions = async () => {
-    const transactionCount = await contract.getTransactionCount();
-    const loadedTransactions = [];
-    for (let i = 0; i < transactionCount; i++) {
+    try {
+      const transactionCount = await contract.getTransactionCount();
+      const loadedTransactions = [];
+      for (let i = 0; i < transactionCount; i++) {
       const [to, value, data, executed, numConfirmations, weight] = await contract.getTransaction(i);
       loadedTransactions.push({ id: i, to, value, data, executed, numConfirmations, weight });
       console.log("weight ", weight);
+      }
+      setTransactions(loadedTransactions);
+    } catch (error) {
+      showAlertMessage("Error loading transactions.");
+      console.error("Error loading transactions:", error);
     }
-    setTransactions(loadedTransactions);
   };
 
   const handleVoteTransaction = async (txId) => {

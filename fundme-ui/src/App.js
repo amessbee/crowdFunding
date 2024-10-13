@@ -19,17 +19,36 @@ const App = () => {
   const [contractBalance, setContractBalance] = useState(0);
   const [key, setKey] = useState("proposals");
 
+  const requestAccount = async () => {
+    if(window.ethereum){
+        try {
+            const accounts = await window.ethereum.request({
+                method: "eth_requestAccounts",
+            });
+            console.log(accounts)           
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+};
+
   useEffect(() => {
     const loadProvider = async () => {
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      setProvider(provider);
-      const signer = await provider.getSigner();
-      setSigner(signer);
-      const contract = new ethers.Contract(contractAddress, contractABI, signer);
-      setContract(contract);
-      updateContractBalance(contract);
+      // await requestAccount();
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        setProvider(provider);
+        const signer = await provider.getSigner();
+        setSigner(signer);
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+        setContract(contract);
+        updateContractBalance(contract);
+      } catch (error) {
+        console.error("Failed to load provider:", error);
+        showAlertMessage(`Failed to load provider: ${error.message}`);
+      }
       if (alertTimeoutRef.current) {
         clearTimeout(alertTimeoutRef.current);
       }
@@ -44,8 +63,13 @@ const App = () => {
   }, []);
 
   const updateContractBalance = async (contract) => {
-    const balance = await contract.getBalance();
-    setContractBalance(ethers.formatEther(balance));
+    try {
+      const balance = await contract.getBalance();
+      setContractBalance(ethers.formatEther(balance));
+    } catch (error) {
+      console.error("Failed to update contract balance:", error);
+      showAlertMessage(`Failed to update contract balance: ${error.message}`);
+    }
   };
 
   const showAlertMessage = (message) => {
