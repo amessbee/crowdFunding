@@ -3,24 +3,24 @@ pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 
-// This contract implements a decentralized crowdfunding platform where multiple memebers can submit, confirm, and execute transactions.
+// This contract implements a decentralized crowdfunding platform where multiple memebers can submit, approve, and execute projects.
 // The contract supports weighted voting based on contributions and allows for dynamic changes to the contract's parameters and members through proposals.
 
 contract Fundme {
     // Events to log various actions within the contract
     event Deposit(address indexed sender, uint256 amount, uint256 balance);
-    event SubmitTransaction(
+    event SubmitProject(
         address indexed member,
         uint256 indexed txIndex,
         address indexed to,
         uint256 value,
         bytes data
     );
-    event ConfirmTransaction(address indexed member, uint256 indexed txIndex);
-    event RevokeConfirmation(address indexed member, uint256 indexed txIndex);
-    event ExecuteTransaction(address indexed member, uint256 indexed txIndex);
+    event ApproveProject(address indexed member, uint256 indexed txIndex);
+    event RevokeApproval(address indexed member, uint256 indexed txIndex);
+    event ExecuteProject(address indexed member, uint256 indexed txIndex);
     event SubmitProposal(uint256 indexed proposalId, string proposalType);
-    event ConfirmProposal(address indexed member, uint256 indexed proposalId);
+    event ApproveProposal(address indexed member, uint256 indexed proposalId);
     event ExecuteProposal(uint256 indexed proposalId);
 
     // State variables
@@ -28,38 +28,38 @@ contract Fundme {
     mapping(address => bool) public isMember; // Mapping to check if an address is an member
     mapping(address => uint256) public contributionsOf; // Mapping to track contributions of each member
     uint256 public totalContributions; // Total contributions made by all members
-    uint256 public percentageConfirmationsRequired; // Percentage of confirmations required for weighted voting
-    uint256 public numConfirmationsRequired; // Number of confirmations required for non-weighted voting
+    uint256 public percentageApprovalsRequired; // Percentage of approvals required for weighted voting
+    uint256 public numApprovalsRequired; // Number of approvals required for non-weighted voting
     bool public votingByWeight; // Flag to determine if voting is by weight or count
 
-    // Struct to represent a transaction
-    struct Transaction {
-        address to; // Address to which the transaction is made
-        uint256 value; // Value of the transaction
-        bytes data; // Data payload of the transaction
-        bool executed; // Flag to check if the transaction is executed
-        uint256 numConfirmations; // Number of confirmations received
-        uint256 weight; // Weight of the confirmations received
+    // Struct to represent a project
+    struct Project {
+        address to; // Address to which the project is paid
+        uint256 value; // Value of the project
+        bytes data; // Data payload of the project
+        bool executed; // Flag to check if the project is executed
+        uint256 numApprovals; // Number of approvals received
+        uint256 weight; // Weight of the approvals received
     }
 
     // Struct to represent a proposal
     struct Proposal {
         string proposalType; // Type of proposal ("addMember", "removeMember", "changeParameter")
         address newMember; // New member address (if applicable)
-        uint256 newPercentageConfirmationsRequired; // New percentage of confirmations required (if applicable)
-        uint256 newNumConfirmationsRequired; // New number of confirmations required (if applicable)
+        uint256 newPercentageApprovalsRequired; // New percentage of approvals required (if applicable)
+        uint256 newNumApprovalsRequired; // New number of approvals required (if applicable)
         bool newVotingByWeight; // New voting by weight flag (if applicable)
-        uint256 numConfirmations; // Number of confirmations received
-        uint256 weight; // Weight of the confirmations received
+        uint256 numApprovals; // Number of approvals received
+        uint256 weight; // Weight of the approvals received
         bool executed; // Flag to check if the proposal is executed
     }
 
-    // Mappings to track confirmations of transactions and proposals
-    mapping(uint256 => mapping(address => bool)) public isConfirmed;
-    mapping(uint256 => mapping(address => bool)) public isProposalConfirmed;
+    // Mappings to track approvals of projects and proposals
+    mapping(uint256 => mapping(address => bool)) public isApproveed;
+    mapping(uint256 => mapping(address => bool)) public isProposalApproveed;
 
-    // Arrays to store transactions and proposals
-    Transaction[] public transactions;
+    // Arrays to store projects and proposals
+    Project[] public projects;
     Proposal[] public proposals;
 
     // Modifiers to enforce various checks
@@ -69,7 +69,7 @@ contract Fundme {
     }
 
     modifier txExists(uint256 _txIndex) {
-        require(_txIndex < transactions.length, "tx does not exist");
+        require(_txIndex < projects.length, "tx does not exist");
         _;
     }
 
@@ -79,12 +79,12 @@ contract Fundme {
     }
 
     modifier notExecuted(uint256 _txIndex) {
-        require(!transactions[_txIndex].executed, "tx already executed");
+        require(!projects[_txIndex].executed, "tx already executed");
         _;
     }
 
-    modifier notConfirmed(uint256 _txIndex) {
-        require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
+    modifier notApproveed(uint256 _txIndex) {
+        require(!isApproveed[_txIndex][msg.sender], "tx already approved");
         _;
     }
 
@@ -93,21 +93,21 @@ contract Fundme {
         _;
     }
 
-    modifier notProposalConfirmed(uint256 _proposalId) {
-        require(!isProposalConfirmed[_proposalId][msg.sender], "proposal already confirmed");
+    modifier notProposalApproveed(uint256 _proposalId) {
+        require(!isProposalApproveed[_proposalId][msg.sender], "proposal already approved");
         _;
     }
 
     // Constructor to initialize the contract with initial members and parameters
-    constructor(address[] memory _members, uint256 _numConfirmationsRequired, uint256 _percentageConfirmationsRequired, bool _votingByWeight) {
+    constructor(address[] memory _members, uint256 _numApprovalsRequired, uint256 _percentageApprovalsRequired, bool _votingByWeight) {
         require(_members.length > 0, "members required");
         require(
-            _percentageConfirmationsRequired >= 0 && _percentageConfirmationsRequired <= 100,
-            "invalid number of required percentage confirmations"
+            _percentageApprovalsRequired >= 0 && _percentageApprovalsRequired <= 100,
+            "invalid number of required percentage approvals"
         );
         require(
-            _numConfirmationsRequired >= 0 && _numConfirmationsRequired <= _members.length,
-            "invalid number of required confirmations"
+            _numApprovalsRequired >= 0 && _numApprovalsRequired <= _members.length,
+            "invalid number of required approvals"
         );
 
         for (uint256 i = 0; i < _members.length; i++) {
@@ -119,8 +119,8 @@ contract Fundme {
             members.push(member);
         }
 
-        numConfirmationsRequired = _numConfirmationsRequired;
-        percentageConfirmationsRequired = _percentageConfirmationsRequired;
+        numApprovalsRequired = _numApprovalsRequired;
+        percentageApprovalsRequired = _percentageApprovalsRequired;
         votingByWeight = _votingByWeight;
     }
 
@@ -138,69 +138,69 @@ contract Fundme {
         return address(this).balance;
     }
 
-    // Function to submit a new transaction
-    function submitTransaction(address _to, uint256 _value, bytes memory _data) public onlyMember {
-        uint256 txIndex = transactions.length;
-        transactions.push(Transaction({to: _to, value: _value, data: _data, executed: false, numConfirmations: 0, weight: 0}));
-        emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data);
+    // Function to submit a new project
+    function submitProject(address _to, uint256 _value, bytes memory _data) public onlyMember {
+        uint256 txIndex = projects.length;
+        projects.push(Project({to: _to, value: _value, data: _data, executed: false, numApprovals: 0, weight: 0}));
+        emit SubmitProject(msg.sender, txIndex, _to, _value, _data);
     }
 
-    // Function to confirm a transaction
-    function confirmTransaction(uint256 _txIndex) public onlyMember txExists(_txIndex) notExecuted(_txIndex) notConfirmed(_txIndex) {
-        Transaction storage transaction = transactions[_txIndex];
-        transaction.numConfirmations += 1;
-        transaction.weight += contributionsOf[msg.sender];
-        isConfirmed[_txIndex][msg.sender] = true;
-        emit ConfirmTransaction(msg.sender, _txIndex);
+    // Function to approve a project
+    function approveProject(uint256 _txIndex) public onlyMember txExists(_txIndex) notExecuted(_txIndex) notApproveed(_txIndex) {
+        Project storage project = projects[_txIndex];
+        project.numApprovals += 1;
+        project.weight += contributionsOf[msg.sender];
+        isApproveed[_txIndex][msg.sender] = true;
+        emit ApproveProject(msg.sender, _txIndex);
     }
 
-    // Function to execute a confirmed transaction
-    function executeTransaction(uint256 _txIndex) public onlyMember txExists(_txIndex) notExecuted(_txIndex) {
-        Transaction storage transaction = transactions[_txIndex];
+    // Function to execute a approved project
+    function executeProject(uint256 _txIndex) public onlyMember txExists(_txIndex) notExecuted(_txIndex) {
+        Project storage project = projects[_txIndex];
         if (votingByWeight) {
-            require(transaction.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute tx - voting by weight");
-            console.log("transaction.weight: %s", transaction.weight);
+            require(project.weight > totalContributions * percentageApprovalsRequired / 100, "cannot execute tx - voting by weight");
+            console.log("project.weight: %s", project.weight);
             console.log("totalContributions: %s", totalContributions);
-            console.log("percentageConfirmationsRequired: %s", percentageConfirmationsRequired);
+            console.log("percentageApprovalsRequired: %s", percentageApprovalsRequired);
 
         } else {
-            require(transaction.numConfirmations >= numConfirmationsRequired, "cannot execute tx - voting by count");
-            console.log("transaction.numConfirmations: %s", transaction.numConfirmations);
-            console.log("numConfirmationsRequired: %s", numConfirmationsRequired);
+            require(project.numApprovals >= numApprovalsRequired, "cannot execute tx - voting by count");
+            console.log("project.numApprovals: %s", project.numApprovals);
+            console.log("numApprovalsRequired: %s", numApprovalsRequired);
 
         }
-        transaction.executed = true;
-        (bool success, ) = transaction.to.call{value: transaction.value}(transaction.data);
+        project.executed = true;
+        (bool success, ) = project.to.call{value: project.value}(project.data);
         require(success, "tx failed");
-        emit ExecuteTransaction(msg.sender, _txIndex);
+        emit ExecuteProject(msg.sender, _txIndex);
     }
 
-    // Function to revoke a confirmation for a transaction
-    function revokeConfirmation(uint256 _txIndex) public onlyMember txExists(_txIndex) notExecuted(_txIndex) {
-        Transaction storage transaction = transactions[_txIndex];
-        require(isConfirmed[_txIndex][msg.sender], "tx not confirmed");
-        transaction.numConfirmations -= 1;
-        transaction.weight -= contributionsOf[msg.sender];
-        isConfirmed[_txIndex][msg.sender] = false;
-        emit RevokeConfirmation(msg.sender, _txIndex);
+    // Function to revoke an approval for a project
+    function revokeApproval(uint256 _txIndex) public onlyMember txExists(_txIndex) notExecuted(_txIndex) {
+        Project storage project = projects[_txIndex];
+        require(isApproveed[_txIndex][msg.sender], "tx not approved");
+        project.numApprovals -= 1;
+        project.weight -= contributionsOf[msg.sender];
+        isApproveed[_txIndex][msg.sender] = false;
+        emit RevokeApproval(msg.sender, _txIndex);
     }
 
     // Function to submit a new proposal
     function submitProposal(
         string memory proposalType,
         address _newMember,
-        uint256 _newPercentageConfirmationsRequired,
-        uint256 _newNumConfirmationsRequired,
+        uint256 _newPercentageApprovalsRequired,
+        uint256 _newNumApprovalsRequired,
         bool _newVotingByWeight
     ) public onlyMember {
         proposals.push(
             Proposal({
                 proposalType: proposalType,
                 newMember: _newMember,
-                newPercentageConfirmationsRequired: _newPercentageConfirmationsRequired,
-                newNumConfirmationsRequired: _newNumConfirmationsRequired,
+                newPercentageApprovalsRequired: _newPercentageApprovalsRequired,
+                newNumApprovalsRequired: _newNumApprovalsRequired,
                 newVotingByWeight: _newVotingByWeight,
-                numConfirmations: 0,
+                numApprovals: 0,
                 weight: 0,
                 executed: false
             })
@@ -208,23 +208,23 @@ contract Fundme {
         emit SubmitProposal(proposals.length - 1, proposalType);
     }
 
-    // Function to confirm a proposal
-    function confirmProposal(uint256 _proposalId) public onlyMember proposalExists(_proposalId) notProposalExecuted(_proposalId) notProposalConfirmed(_proposalId) {
+    // Function to approve a proposal
+    function approveProposal(uint256 _proposalId) public onlyMember proposalExists(_proposalId) notProposalExecuted(_proposalId) notProposalApproveed(_proposalId) {
         Proposal storage proposal = proposals[_proposalId];
-        proposal.numConfirmations += 1;
+        proposal.numApprovals += 1;
         proposal.weight += contributionsOf[msg.sender];
-        isProposalConfirmed[_proposalId][msg.sender] = true;
-        emit ConfirmProposal(msg.sender, _proposalId);
+        isProposalApproveed[_proposalId][msg.sender] = true;
+        emit ApproveProposal(msg.sender, _proposalId);
     }
 
-    // Function to execute a confirmed proposal
+    // Function to execute a approved proposal
     function executeProposal(uint256 _proposalId) public onlyMember proposalExists(_proposalId) notProposalExecuted(_proposalId) {
         Proposal storage proposal = proposals[_proposalId];
 
         if (votingByWeight) {
-            require(proposal.weight > totalContributions * percentageConfirmationsRequired / 100, "cannot execute proposal - voting by weight");
+            require(proposal.weight > totalContributions * percentageApprovalsRequired / 100, "cannot execute proposal - voting by weight");
         } else {
-            require(proposal.numConfirmations >= numConfirmationsRequired, "cannot execute proposal - voting by count");
+            require(proposal.numApprovals >= numApprovalsRequired, "cannot execute proposal - voting by count");
         }
 
         if (keccak256(bytes(proposal.proposalType)) == keccak256("addMember")) {
@@ -243,8 +243,8 @@ contract Fundme {
                 }
             }
         } else if (keccak256(bytes(proposal.proposalType)) == keccak256("changeParameter")) {
-            percentageConfirmationsRequired = proposal.newPercentageConfirmationsRequired;
-            numConfirmationsRequired = proposal.newNumConfirmationsRequired;
+            percentageApprovalsRequired = proposal.newPercentageApprovalsRequired;
+            numApprovalsRequired = proposal.newNumApprovalsRequired;
             votingByWeight = proposal.newVotingByWeight;
         }
 
@@ -257,21 +257,21 @@ contract Fundme {
         return members;
     }
 
-    // Function to get the count of transactions
-    function getTransactionCount() public view returns (uint256) {
-        return transactions.length;
+    // Function to get the count of projects
+    function getProjectCount() public view returns (uint256) {
+        return projects.length;
     }
 
-    // Function to get details of a specific transaction
-    function getTransaction(uint256 _txIndex) public view returns (address to, uint256 value, bytes memory data, bool executed, uint256 numConfirmations, uint256 weight) {
-        Transaction storage transaction = transactions[_txIndex];
-        return (transaction.to, transaction.value, transaction.data, transaction.executed, transaction.numConfirmations, transaction.weight);
+    // Function to get details of a specific project
+    function getProject(uint256 _txIndex) public view returns (address to, uint256 value, bytes memory data, bool executed, uint256 numApprovals, uint256 weight) {
+        Project storage project = projects[_txIndex];
+        return (project.to, project.value, project.data, project.executed, project.numApprovals, project.weight);
     }
 
     // Function to get details of a specific proposal
-    function getProposal(uint256 _proposalId) public view returns (string memory proposalType, address newMember, uint256 newPercentageConfirmationsRequired, uint256 newNumConfirmationsRequired, bool newVotingByWeight, uint256 numConfirmations, uint256 weight, bool executed) {
+    function getProposal(uint256 _proposalId) public view returns (string memory proposalType, address newMember, uint256 newPercentageApprovalsRequired, uint256 newNumApprovalsRequired, bool newVotingByWeight, uint256 numApprovals, uint256 weight, bool executed) {
         Proposal storage proposal = proposals[_proposalId];
-        return (proposal.proposalType, proposal.newMember, proposal.newPercentageConfirmationsRequired, proposal.newNumConfirmationsRequired, proposal.newVotingByWeight, proposal.numConfirmations, proposal.weight, proposal.executed);
+        return (proposal.proposalType, proposal.newMember, proposal.newPercentageApprovalsRequired, proposal.newNumApprovalsRequired, proposal.newVotingByWeight, proposal.numApprovals, proposal.weight, proposal.executed);
     }
 
     // Function to get the count of proposals

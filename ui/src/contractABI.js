@@ -9,12 +9,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "_numConfirmationsRequired",
+        "name": "_numApprovalsRequired",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_percentageConfirmationsRequired",
+        "name": "_percentageApprovalsRequired",
         "type": "uint256"
       },
       {
@@ -38,11 +38,11 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "proposalId",
+        "name": "txIndex",
         "type": "uint256"
       }
     ],
-    "name": "ConfirmProposal",
+    "name": "ApproveProject",
     "type": "event"
   },
   {
@@ -57,11 +57,11 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "txIndex",
+        "name": "proposalId",
         "type": "uint256"
       }
     ],
-    "name": "ConfirmTransaction",
+    "name": "ApproveProposal",
     "type": "event"
   },
   {
@@ -94,6 +94,25 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "member",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "txIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExecuteProject",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "proposalId",
         "type": "uint256"
@@ -118,45 +137,7 @@
         "type": "uint256"
       }
     ],
-    "name": "ExecuteTransaction",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "member",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "txIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "RevokeConfirmation",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "proposalType",
-        "type": "string"
-      }
-    ],
-    "name": "SubmitProposal",
+    "name": "RevokeApproval",
     "type": "event"
   },
   {
@@ -193,21 +174,27 @@
         "type": "bytes"
       }
     ],
-    "name": "SubmitTransaction",
+    "name": "SubmitProject",
     "type": "event"
   },
   {
+    "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
         "internalType": "uint256",
-        "name": "_proposalId",
+        "name": "proposalId",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "proposalType",
+        "type": "string"
       }
     ],
-    "name": "confirmProposal",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "name": "SubmitProposal",
+    "type": "event"
   },
   {
     "inputs": [
@@ -217,7 +204,20 @@
         "type": "uint256"
       }
     ],
-    "name": "confirmTransaction",
+    "name": "approveProject",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approveProposal",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -245,11 +245,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_proposalId",
+        "name": "_txIndex",
         "type": "uint256"
       }
     ],
-    "name": "executeProposal",
+    "name": "executeProject",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -258,11 +258,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_txIndex",
+        "name": "_proposalId",
         "type": "uint256"
       }
     ],
-    "name": "executeTransaction",
+    "name": "executeProposal",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -297,6 +297,63 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "_txIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "getProject",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bool",
+        "name": "executed",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "numApprovals",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "weight",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getProjectCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "_proposalId",
         "type": "uint256"
       }
@@ -315,12 +372,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "newPercentageConfirmationsRequired",
+        "name": "newPercentageApprovalsRequired",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "newNumConfirmationsRequired",
+        "name": "newNumApprovalsRequired",
         "type": "uint256"
       },
       {
@@ -330,7 +387,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "numConfirmations",
+        "name": "numApprovals",
         "type": "uint256"
       },
       {
@@ -364,63 +421,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_txIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "getTransaction",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bool",
-        "name": "executed",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "numConfirmations",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "weight",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getTransactionCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "",
         "type": "uint256"
       },
@@ -430,7 +430,7 @@
         "type": "address"
       }
     ],
-    "name": "isConfirmed",
+    "name": "isApproveed",
     "outputs": [
       {
         "internalType": "bool",
@@ -473,7 +473,7 @@
         "type": "address"
       }
     ],
-    "name": "isProposalConfirmed",
+    "name": "isProposalApproveed",
     "outputs": [
       {
         "internalType": "bool",
@@ -505,7 +505,7 @@
   },
   {
     "inputs": [],
-    "name": "numConfirmationsRequired",
+    "name": "numApprovalsRequired",
     "outputs": [
       {
         "internalType": "uint256",
@@ -518,11 +518,55 @@
   },
   {
     "inputs": [],
-    "name": "percentageConfirmationsRequired",
+    "name": "percentageApprovalsRequired",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "projects",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bool",
+        "name": "executed",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "numApprovals",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "weight",
         "type": "uint256"
       }
     ],
@@ -551,12 +595,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "newPercentageConfirmationsRequired",
+        "name": "newPercentageApprovalsRequired",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "newNumConfirmationsRequired",
+        "name": "newNumApprovalsRequired",
         "type": "uint256"
       },
       {
@@ -566,7 +610,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "numConfirmations",
+        "name": "numApprovals",
         "type": "uint256"
       },
       {
@@ -591,40 +635,7 @@
         "type": "uint256"
       }
     ],
-    "name": "revokeConfirmation",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "proposalType",
-        "type": "string"
-      },
-      {
-        "internalType": "address",
-        "name": "_newMember",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_newPercentageConfirmationsRequired",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_newNumConfirmationsRequired",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_newVotingByWeight",
-        "type": "bool"
-      }
-    ],
-    "name": "submitProposal",
+    "name": "revokeApproval",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -647,7 +658,40 @@
         "type": "bytes"
       }
     ],
-    "name": "submitTransaction",
+    "name": "submitProject",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "proposalType",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_newMember",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_newPercentageApprovalsRequired",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_newNumApprovalsRequired",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_newVotingByWeight",
+        "type": "bool"
+      }
+    ],
+    "name": "submitProposal",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -659,50 +703,6 @@
       {
         "internalType": "uint256",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "transactions",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bool",
-        "name": "executed",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "numConfirmations",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "weight",
         "type": "uint256"
       }
     ],
@@ -727,5 +727,5 @@
     "type": "receive"
   }
 ];
-    export const contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+    export const contractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
   

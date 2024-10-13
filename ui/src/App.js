@@ -3,7 +3,7 @@
  * 
  * This file contains the main component for the FundMe Contract Dashboard application.
  * It uses React and ethers.js to interact with an Ethereum smart contract.
- * The application allows users to donate funds to the contract, view transactions, and manage proposals.
+ * The application allows users to donate funds to the contract, view projects, and manage proposals.
  * 
  * Dependencies:
  * - React: A JavaScript library for building user interfaces.
@@ -14,7 +14,7 @@
  * 
  * Components:
  * - Proposals: Manages and displays proposals for the FundMe committee.
- * - Transactions: Displays transactions related to the contract.
+ * - Projects: Displays projects related to the contract.
  * - SendEth: Allows users to send Ether to the contract.
  * 
  * The application also handles connecting to the Ethereum provider, managing contract state, and displaying alerts.
@@ -26,7 +26,7 @@ import { Container, Tabs, Tab, Alert, Collapse } from "react-bootstrap";
 import { CSSTransition } from 'react-transition-group';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Proposals from './Proposals';
-import Transactions from './Transactions';
+import Projects from './Projects';
 import SendEth from './SendEth';
 import { contractAddress, contractABI } from './contractABI';
 import './App.css'; // Import the CSS file for transitions
@@ -34,7 +34,7 @@ import './App.css'; // Import the CSS file for transitions
 const App = () => {
   // State variables
   const [provider, setProvider] = useState(null); // Ethereum provider
-  const [signer, setSigner] = useState(null); // Signer for transactions
+  const [signer, setSigner] = useState(null); // Signer for projects
   const [contract, setContract] = useState(null); // Smart contract instance
   const [alertMessage, setAlertMessage] = useState(""); // Alert message
   const [showAlert, setShowAlert] = useState(false); // Alert visibility
@@ -151,8 +151,8 @@ const App = () => {
           />
         </Tab>
 
-        <Tab eventKey="transactions" title="Projects in Need">
-          <Transactions contract={contract} showAlertMessage={showAlertMessage} />
+        <Tab eventKey="projects" title="Projects in Need">
+          <Projects contract={contract} showAlertMessage={showAlertMessage} />
         </Tab>
 
         <Tab eventKey="proposals" title="FundMe Committee Admin Proposals">

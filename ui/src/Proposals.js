@@ -3,7 +3,7 @@
  * 
  * This component is responsible for displaying and managing proposals related to the administration of a crowdfunding contract.
  * It allows users to view active proposals, vote on them, and execute them if they have passed. Additionally, it provides 
- * functionality to submit new proposals for adding/removing members, changing voting methods, and modifying confirmation requirements.
+ * functionality to submit new proposals for adding/removing members, changing voting methods, and modifying approval requirements.
  * 
  * Props:
  * - contract: The smart contract instance to interact with.
@@ -14,8 +14,8 @@
  * - proposals: List of proposals fetched from the contract.
  * - activeTab: Currently active tab in the proposal submission form.
  * - newMember: Address of the new member to be added or removed.
- * - newNumConfirmations: New number of confirmations required for a proposal to pass.
- * - newWeightConfirmations: New weight of confirmations required for a proposal to pass.
+ * - newNumApprovals: New number of approvals required for a proposal to pass.
+ * - newWeightApprovals: New weight of approvals required for a proposal to pass.
  * - votingByWeight: Boolean indicating if voting is by weight or count.
  * - members: List of current members fetched from the contract.
  */
@@ -28,8 +28,8 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
   const [proposals, setProposals] = useState([]);
   const [activeTab, setActiveTab] = useState("addMember");
   const [newMember, setNewMember] = useState("");
-  const [newNumConfirmations, setNewNumConfirmations] = useState("");
-  const [newWeightConfirmations, setNewWeightConfirmations] = useState("");
+  const [newNumApprovals, setNewNumApprovals] = useState("");
+  const [newWeightApprovals, setNewWeightApprovals] = useState("");
   const [votingByWeight, setVotingByWeight] = useState(false);
   const [members, setMembers] = useState([]);  // To store the list of members
 
@@ -53,10 +53,10 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
         id: i,
         proposalType: proposal.proposalType || proposal[0],
         newMember: proposal.newMember || proposal[1],
-        newPercentageConfirmationsRequired: proposal.newPercentageConfirmationsRequired || proposal[2],
-        newNumConfirmationsRequired: proposal.newNumConfirmationsRequired || proposal[3],
+        newPercentageApprovalsRequired: proposal.newPercentageApprovalsRequired || proposal[2],
+        newNumApprovalsRequired: proposal.newNumApprovalsRequired || proposal[3],
         newVotingByWeight: proposal.newVotingByWeight || proposal[4],
-        numConfirmations: proposal.numConfirmations || proposal[5],
+        numApprovals: proposal.numApprovals || proposal[5],
         weight: proposal.weight || proposal[6],
         executed: proposal.executed || proposal[7],
       };
@@ -79,7 +79,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
   // Handle voting on a proposal
   const handleVoteProposal = async (proposalId) => {
     try {
-      const tx = await contract.confirmProposal(proposalId);
+      const tx = await contract.approveProposal(proposalId);
       await tx.wait();
       showAlertMessage("Vote on proposal successful!");
       loadProposals();
@@ -107,7 +107,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
     try {
       let proposalNewMember = ethers.ZeroAddress;
       let proposalNewPercentage = 0;
-      let proposalNewNumConfirmations = 0;
+      let proposalNewNumApprovals = 0;
       let proposalVotingByWeight = votingByWeight;
 
       // Determine the type of proposal and set the appropriate values
@@ -117,10 +117,10 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
         proposalNewMember = newMember;
       } else if (activeTab === "changeVotingMethod") {
         proposalVotingByWeight = votingByWeight;
-      } else if (activeTab === "changePassingNumConfirmations") {
-        proposalNewNumConfirmations = newNumConfirmations;
-      } else if (activeTab === "changePassingWeightConfirmations") {
-        proposalNewPercentage = newWeightConfirmations;
+      } else if (activeTab === "changePassingNumApprovals") {
+        proposalNewNumApprovals = newNumApprovals;
+      } else if (activeTab === "changePassingWeightApprovals") {
+        proposalNewPercentage = newWeightApprovals;
       }
 
       // Submit the proposal to the contract
@@ -128,7 +128,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
         activeTab,
         proposalNewMember,
         proposalNewPercentage,
-        proposalNewNumConfirmations,
+        proposalNewNumApprovals,
         proposalVotingByWeight
       );
       
@@ -151,7 +151,7 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               <tr>
                 <th>Proposal Type</th>
                 <th>Details</th>
-                <th>Confirmations</th>
+                <th>Approvals</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -166,12 +166,12 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
                       `Remove Member: ${proposal.newMember}`}
                     {proposal.proposalType === "changeVotingMethod" &&
                       `Voting Method: ${proposal.newVotingByWeight ? "Voting by Weight" : "Voting by Count"}`}
-                    {proposal.proposalType === "changePassingNumConfirmations" &&
-                      `Required Confirmations: ${proposal.newNumConfirmationsRequired}`}
-                    {proposal.proposalType === "changePassingWeightConfirmations" &&
-                      `Required Weight: ${proposal.newPercentageConfirmationsRequired}`}
+                    {proposal.proposalType === "changePassingNumApprovals" &&
+                      `Required Approvals: ${proposal.newNumApprovalsRequired}`}
+                    {proposal.proposalType === "changePassingWeightApprovals" &&
+                      `Required Weight: ${proposal.newPercentageApprovalsRequired}`}
                   </td>
-                  <td>{proposal.numConfirmations.toString()}</td>
+                  <td>{proposal.numApprovals.toString()}</td>
                   <td>
                     <Button
                       onClick={() => handleVoteProposal(proposal.id)}
@@ -258,14 +258,14 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               </Form>
             </Tab>
 
-            <Tab eventKey="changePassingNumConfirmations" title="Voting Count Req.">
+            <Tab eventKey="changePassingNumApprovals" title="Voting Count Req.">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
                   <Form.Label>New minimum Count of Votes Required</Form.Label>
                   <Form.Control
                     type="text"
-                    value={newNumConfirmations}
-                    onChange={(e) => setNewNumConfirmations(e.target.value)}
+                    value={newNumApprovals}
+                    onChange={(e) => setNewNumApprovals(e.target.value)}
                     placeholder="Enter number of votes"
                   />
                 </Form.Group>
@@ -275,14 +275,14 @@ const Proposals = ({ contract, showAlertMessage, contractParameters }) => {
               </Form>
             </Tab>
 
-            <Tab eventKey="changePassingWeightConfirmations" title="Voting Weight Req.">
+            <Tab eventKey="changePassingWeightApprovals" title="Voting Weight Req.">
               <Form onSubmit={handleSubmitProposal}>
                 <Form.Group>
                   <Form.Label>New Minimum Weight of Votes Required</Form.Label>
                   <Form.Control
                     type="text"
-                    value={newWeightConfirmations}
-                    onChange={(e) => setNewWeightConfirmations(e.target.value)}
+                    value={newWeightApprovals}
+                    onChange={(e) => setNewWeightApprovals(e.target.value)}
                     placeholder="Enter minimum weight required"
                   />
                 </Form.Group>

@@ -3,10 +3,10 @@ const { ethers } = require("hardhat");
 
 /**
  * This test suite is designed to comprehensively test the functionality of a smart contract called "Fundme" that operates 
- * with weighted voting and multi-signature transaction approval. It covers various aspects of the contract's functionality, 
- * including deployment, membership management, transaction submission, confirmation, execution, and revocation, as well as 
- * ensuring that only valid members can submit and confirm transactions. The tests also cover edge cases such as preventing 
- * duplicate confirmations, handling insufficient transaction weight for execution, and reverting on unauthorized actions.
+ * with weighted voting and multi-signature project approval. It covers various aspects of the contract's functionality, 
+ * including deployment, membership management, project submission, approval, execution, and revocation, as well as 
+ * ensuring that only valid members can submit and approve projects. The tests also cover edge cases such as preventing 
+ * duplicate approvals, handling insufficient project weight for execution, and reverting on unauthorized actions.
  * Additionally, the suite verifies the contract's behavior in handling ETH contributions, tracking contributions, and emitting 
  * appropriate events. Finally, proposals for adding/removing members or changing contract parameters are tested, ensuring that 
  * they can be submitted, voted on, and executed under the correct conditions.
@@ -29,8 +29,8 @@ describe("Deployment", function () {
             expect(await fundme.getMembers()).to.deep.equal([member.address, addr1.address, addr2.address, addr3.address]);
         });
 
-        it("Should set the right percentage of confirmations required", async function () {
-            expect(await fundme.percentageConfirmationsRequired()).to.equal(50);
+        it("Should set the right percentage of approvals required", async function () {
+            expect(await fundme.percentageApprovalsRequired()).to.equal(50);
         });
     });
 
@@ -42,18 +42,18 @@ describe("Members", function () {
         });
     });
 
-describe("Transactions", function () {
-        it("Should submit a transaction", async function () {
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            const tx = await fundme.getTransaction(0);
+describe("Projects", function () {
+        it("Should submit a project", async function () {
+            await fundme.submitProject(addr1.address, 100, "0x");
+            const tx = await fundme.getProject(0);
             expect(tx.to).to.equal(addr1.address);
             expect(tx.value).to.equal(100);
             expect(tx.executed).to.be.false;
-            expect(tx.numConfirmations).to.equal(0);
+            expect(tx.numApprovals).to.equal(0);
             expect(tx.weight).to.equal(0);
         });
 
-        it("Should confirm a transaction weight", async function () {
+        it("Should approve a project weight", async function () {
             // Send some ETH to the contract
             await addr1.sendTransaction({
                 to: fundme.getAddress(),
@@ -64,13 +64,13 @@ describe("Transactions", function () {
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.connect(addr1).confirmTransaction(0);
-            const tx = await fundme.getTransaction(0);
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.connect(addr1).approveProject(0);
+            const tx = await fundme.getProject(0);
             expect(tx.weight).to.equal(ethers.parseEther("1.0"));
         });
 
-        it("Should execute a transaction", async function () {
+        it("Should execute a project", async function () {
             // Send some ETH to the contract
             await addr1.sendTransaction({
                 to: fundme.getAddress(),
@@ -82,14 +82,14 @@ describe("Transactions", function () {
                 value: ethers.parseEther("2.0"), // Sending 1 ETH
             });
 
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.connect(addr2).confirmTransaction(0);
-            await fundme.executeTransaction(0);
-            const tx = await fundme.getTransaction(0);
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.connect(addr2).approveProject(0);
+            await fundme.executeProject(0);
+            const tx = await fundme.getProject(0);
             expect(tx.executed).to.be.true;
         });
 
-        it("Should not execute a transaction with less weight", async function () {
+        it("Should not execute a project with less weight", async function () {
             // Send some ETH to the contract
             await addr1.sendTransaction({
                 to: fundme.getAddress(),
@@ -101,37 +101,37 @@ describe("Transactions", function () {
                 value: ethers.parseEther("2.0"), // Sending 1 ETH
             });
 
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.connect(addr1).confirmTransaction(0);
-            await expect(fundme.executeTransaction(0)).to.be.revertedWith("cannot execute tx - voting by weight");
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.connect(addr1).approveProject(0);
+            await expect(fundme.executeProject(0)).to.be.revertedWith("cannot execute tx - voting by weight");
         });
 
-        it("Should revoke a confirmation", async function () {
+        it("Should revoke an approval", async function () {
             // Send some ETH to the contract
             await addr2.sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
 
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.connect(addr1).confirmTransaction(0);
-            await fundme.connect(addr1).revokeConfirmation(0);
-            const tx = await fundme.getTransaction(0);
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.connect(addr1).approveProject(0);
+            await fundme.connect(addr1).revokeApproval(0);
+            const tx = await fundme.getProject(0);
             expect(tx.weight).to.equal(0);
         });
     });
 
 describe("Modifiers", function () {
-        it("Should revert if not member tries to submit transaction", async function () {
-            await expect(fundme.connect(addrs[0]).submitTransaction(addr1.address, 100, "0x")).to.be.revertedWith("not member");
+        it("Should revert if not member tries to submit project", async function () {
+            await expect(fundme.connect(addrs[0]).submitProject(addr1.address, 100, "0x")).to.be.revertedWith("not member");
         });
 
-        it("Should revert if transaction does not exist", async function () {
-            await expect(fundme.confirmTransaction(0)).to.be.revertedWith("tx does not exist");
+        it("Should revert if project does not exist", async function () {
+            await expect(fundme.approveProject(0)).to.be.revertedWith("tx does not exist");
         });
 
         
-        it("Should revert if transaction already executed", async function () {
+        it("Should revert if project already executed", async function () {
             // Send some ETH to the contract
             await addr1.sendTransaction({
                 to: fundme.getAddress(),
@@ -141,18 +141,18 @@ describe("Modifiers", function () {
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            await fundme.connect(addr1).confirmTransaction(0);
-            await fundme.connect(addr2).confirmTransaction(0);
-            await fundme.executeTransaction(0);
-            await expect(fundme.executeTransaction(0)).to.be.revertedWith("tx already executed");
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            await fundme.connect(addr1).approveProject(0);
+            await fundme.connect(addr2).approveProject(0);
+            await fundme.executeProject(0);
+            await expect(fundme.executeProject(0)).to.be.revertedWith("tx already executed");
         });
 
-        it("Should revert if transaction already confirmed", async function () {
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            await expect(fundme.confirmTransaction(0)).to.be.revertedWith("tx already confirmed");
+        it("Should revert if project already approved", async function () {
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            await expect(fundme.approveProject(0)).to.be.revertedWith("tx already approved");
         });
     });
 
@@ -219,8 +219,8 @@ describe("Deployment", function () {
             expect(await fundme.getMembers()).to.deep.equal([member.address, addr1.address, addr2.address, addr3.address]);
         });
 
-        it("Should set the right number of confirmations required", async function () {
-            expect(await fundme.numConfirmationsRequired()).to.equal(2);
+        it("Should set the right number of approvals required", async function () {
+            expect(await fundme.numApprovalsRequired()).to.equal(2);
         });
     });
 
@@ -232,87 +232,87 @@ describe("Members", function () {
         });
     });
 
-describe("Transactions", function () {
-        it("Should submit a transaction", async function () {
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            const tx = await fundme.getTransaction(0);
+describe("Projects", function () {
+        it("Should submit a project", async function () {
+            await fundme.submitProject(addr1.address, 100, "0x");
+            const tx = await fundme.getProject(0);
             expect(tx.to).to.equal(addr1.address);
             expect(tx.value).to.equal(100);
             expect(tx.executed).to.be.false;
-            expect(tx.numConfirmations).to.equal(0);
+            expect(tx.numApprovals).to.equal(0);
         });
 
-        it("Should confirm a transaction", async function () {
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            const tx = await fundme.getTransaction(0);
-            expect(tx.numConfirmations).to.equal(1);
+        it("Should approve a project", async function () {
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            const tx = await fundme.getProject(0);
+            expect(tx.numApprovals).to.equal(1);
         });
 
-        it("Should execute a transaction", async function () {
+        it("Should execute a project", async function () {
             // Send some ETH to the contract
             await addr1.sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
 
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            await fundme.connect(addr3).confirmTransaction(0);
-            await fundme.connect(addr1).executeTransaction(0);
-            const tx = await fundme.getTransaction(0);
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            await fundme.connect(addr3).approveProject(0);
+            await fundme.connect(addr1).executeProject(0);
+            const tx = await fundme.getProject(0);
             expect(tx.executed).to.be.true;
         });
 
-        it("Should revoke a confirmation", async function () {
+        it("Should revoke an approval", async function () {
             // Send some ETH to the contract
             await addr2.sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
 
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            await fundme.revokeConfirmation(0);
-            const tx = await fundme.getTransaction(0);
-            expect(tx.numConfirmations).to.equal(0);
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            await fundme.revokeApproval(0);
+            const tx = await fundme.getProject(0);
+            expect(tx.numApprovals).to.equal(0);
         });
 
-        it("Should not execute a transaction without enough confirmations", async function () {
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            await expect(fundme.executeTransaction(0)).to.be.revertedWith("cannot execute tx - voting by count");
+        it("Should not execute a project without enough approvals", async function () {
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            await expect(fundme.executeProject(0)).to.be.revertedWith("cannot execute tx - voting by count");
         });
     });
 
 describe("Modifiers", function () {
-        it("Should revert if not member tries to submit transaction", async function () {
-            await expect(fundme.connect(addrs[0]).submitTransaction(addr1.address, 100, "0x")).to.be.revertedWith("not member");
+        it("Should revert if not member tries to submit project", async function () {
+            await expect(fundme.connect(addrs[0]).submitProject(addr1.address, 100, "0x")).to.be.revertedWith("not member");
         });
 
-        it("Should revert if transaction does not exist", async function () {
-            await expect(fundme.confirmTransaction(0)).to.be.revertedWith("tx does not exist");
+        it("Should revert if project does not exist", async function () {
+            await expect(fundme.approveProject(0)).to.be.revertedWith("tx does not exist");
         });
 
         
-        it("Should revert if transaction already executed", async function () {
+        it("Should revert if project already executed", async function () {
             // Send some ETH to the contract
             await addr2.sendTransaction({
                 to: fundme.getAddress(),
                 value: ethers.parseEther("1.0"), // Sending 1 ETH
             });
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            await fundme.connect(addr1).confirmTransaction(0);
-            await fundme.connect(addr3).confirmTransaction(0);
-            await fundme.executeTransaction(0);
-            await expect(fundme.executeTransaction(0)).to.be.revertedWith("tx already executed");
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            await fundme.connect(addr1).approveProject(0);
+            await fundme.connect(addr3).approveProject(0);
+            await fundme.executeProject(0);
+            await expect(fundme.executeProject(0)).to.be.revertedWith("tx already executed");
         });
 
-        it("Should revert if transaction already confirmed", async function () {
-            await fundme.submitTransaction(addr1.address, 100, "0x");
-            await fundme.confirmTransaction(0);
-            await expect(fundme.confirmTransaction(0)).to.be.revertedWith("tx already confirmed");
+        it("Should revert if project already approved", async function () {
+            await fundme.submitProject(addr1.address, 100, "0x");
+            await fundme.approveProject(0);
+            await expect(fundme.approveProject(0)).to.be.revertedWith("tx already approved");
         });
     });
 
@@ -367,8 +367,8 @@ describe("Receive Function", function () {
             const proposal = await fundme.getProposal(0);
     
             expect(proposal.proposalType).to.equal("changeParameter");
-            expect(proposal.newPercentageConfirmationsRequired).to.equal(60);
-            expect(proposal.newNumConfirmationsRequired).to.equal(3);
+            expect(proposal.newPercentageApprovalsRequired).to.equal(60);
+            expect(proposal.newNumApprovalsRequired).to.equal(3);
             expect(proposal.newVotingByWeight).to.be.true;
         });
     
@@ -391,30 +391,30 @@ describe("Receive Function", function () {
         it("Should allow members to vote on proposals", async function () {
             await fundme.connect(addr1).submitProposal("changeParameter", '0x0000000000000000000000000000000000000000' , 60, 3, true);
     
-            await fundme.connect(addr2).confirmProposal(0);
+            await fundme.connect(addr2).approveProposal(0);
             const proposal = await fundme.getProposal(0);
     
-            expect(proposal.numConfirmations).to.equal(1);
+            expect(proposal.numApprovals).to.equal(1);
         });
     
         it("Should execute a parameter change proposal once enough votes are accumulated", async function () {
             await fundme.submitProposal("changeParameter", '0x0000000000000000000000000000000000000000' , 60, 3, true);
     
-            await fundme.confirmProposal(0);
-            await fundme.connect(addr1).confirmProposal(0);
+            await fundme.approveProposal(0);
+            await fundme.connect(addr1).approveProposal(0);
     
             await fundme.executeProposal(0);
     
-            expect(await fundme.percentageConfirmationsRequired()).to.equal(60);
-            expect(await fundme.numConfirmationsRequired()).to.equal(3);
+            expect(await fundme.percentageApprovalsRequired()).to.equal(60);
+            expect(await fundme.numApprovalsRequired()).to.equal(3);
             expect(await fundme.votingByWeight()).to.be.true;
         });
     
         it("Should execute adding a new member once enough votes are accumulated", async function () {
             await fundme.submitProposal("addMember", addrs[0].address, 0, 0, false);
     
-            await fundme.confirmProposal(0);
-            await fundme.connect(addr1).confirmProposal(0);
+            await fundme.approveProposal(0);
+            await fundme.connect(addr1).approveProposal(0);
     
             await fundme.executeProposal(0);
     
@@ -425,8 +425,8 @@ describe("Receive Function", function () {
         it("Should execute removing an member once enough votes are accumulated", async function () {
             await fundme.submitProposal("removeMember", addr1.address, 0, 0, false);
     
-            await fundme.confirmProposal(0);
-            await fundme.connect(addr2).confirmProposal(0);
+            await fundme.approveProposal(0);
+            await fundme.connect(addr2).approveProposal(0);
     
             await fundme.executeProposal(0);
     
@@ -437,7 +437,7 @@ describe("Receive Function", function () {
         it("Should not execute a proposal without enough votes", async function () {
             await fundme.submitProposal("changeParameter", '0x0000000000000000000000000000000000000000' , 60, 3, true);
     
-            await fundme.confirmProposal(0); // Only one confirmation
+            await fundme.approveProposal(0); // Only one approval
     
             await expect(fundme.executeProposal(0)).to.be.revertedWith("cannot execute proposal - voting by count");
         });
