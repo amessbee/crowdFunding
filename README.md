@@ -33,7 +33,7 @@ Ensure you have the following installed:
 Clone the repository and install the dependencies:
 
 ```shell
-git clone https://github.com/yourusername/crowdFunding.git
+git clone https://github.com/amessbee/crowdFunding.git
 cd crowdFunding
 npm install
 ```
