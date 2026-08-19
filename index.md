@@ -5,6 +5,8 @@ layout: default
 
 # CrowdFunding DApp on Ethereum
 
+By [Mudassir Shabbir](https://amessbee.github.io/)
+
 A fully decentralized crowdfunding platform built on Ethereum smart contracts with a React frontend.
 
 ## What it does
@@ -63,4 +65,4 @@ crowdFunding/
 
 ---
 
-[View on GitHub](https://github.com/amessbee/crowdFunding)
+[View on GitHub](https://github.com/amessbee/crowdFunding) · [More projects](https://amessbee.github.io/)
